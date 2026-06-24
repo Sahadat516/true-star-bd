@@ -7,6 +7,7 @@ import { AppProvider, useApp } from '../../components/AppContext'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { CreditCard, Check, Lock, ArrowLeft, Building2, Wallet, BanknoteIcon, Bitcoin } from 'lucide-react'
+import GatewayIcon from '../../components/GatewayLogos'
 
 function CheckoutContent() {
   const router = useRouter()
@@ -158,12 +159,12 @@ function CheckoutContent() {
                   <button key={gw.id} onClick={() => setSelectedGateway(gw.id)}
                     className={`p-3 rounded-xl border-2 text-left transition-all ${selectedGateway === gw.id ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>
                     <div className="flex items-center gap-2 mb-1">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedGateway === gw.id ? 'border-primary-600' : 'border-gray-300'}`}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedGateway === gw.id ? 'border-primary-600' : 'border-gray-300'}`}>
                         {selectedGateway === gw.id && <div className="w-2 h-2 bg-primary-600 rounded-full" />}
                       </div>
-                      <span className="text-sm font-medium">{gw.name}</span>
+                      <GatewayIcon id={gw.id} name={gw.name} type={gw.type} />
                     </div>
-                    <p className="text-[10px] text-gray-500 capitalize">{gw.type}</p>
+                    <p className="text-[10px] text-gray-500 capitalize ml-6">{gw.type === 'card+mobile' ? 'Card & Mobile' : gw.type === 'mobile' ? 'Mobile Banking' : gw.type === 'wallet' ? 'Digital Wallet' : gw.type === 'crypto' ? 'Cryptocurrency' : gw.type === 'bank' ? 'Bank Transfer' : gw.type}</p>
                   </button>
                 ))}
               </div>

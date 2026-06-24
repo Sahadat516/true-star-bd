@@ -167,7 +167,7 @@ export default function Header() {
                       <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
-                    <Link href="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <User className="w-4 h-4" /> {t('myAccount')}
                     </Link>
                     <Link href="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50">
@@ -229,7 +229,7 @@ export default function Header() {
             <hr className="my-2 border-gray-200 dark:border-gray-700" />
             {user ? (
               <>
-                <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm">My Account</Link>
+                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm">My Account</Link>
                 <button onClick={() => { logout(); setMobileMenuOpen(false); }} className="block w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm text-red-600">Sign Out</button>
               </>
             ) : (
