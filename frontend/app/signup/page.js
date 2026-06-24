@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -164,5 +165,5 @@ function SignUpContent() {
 }
 
 export default function SignUp() {
-  return <AppProvider><SignUpContent /></AppProvider>
+  return <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}><AppProvider><SignUpContent /></AppProvider></Suspense>
 }

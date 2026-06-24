@@ -1,6 +1,6 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
-const { auth } = require('../middleware/auth');
+const { auth, vendorAuth } = require('../middleware/auth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -85,6 +85,49 @@ router.get('/:slug', async (req, res) => {
     });
 
     res.json({ product: { ...product, avgRating }, related });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update product (vendor or admin)
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    // If vendor, check ownership
+    if (req.user.role === 'VENDOR') {
+      const vendor = await prisma.vendor.findUnique({ where: { userId: req.user.id } });
+      if (!vendor || product.vendorId !== vendor.id) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    }
+    if (req.user.role === 'CUSTOMER') return res.status(403).json({ error: 'Not authorized' });
+
+    const updated = await prisma.product.update({
+      where: { id: product.id },
+      data: req.body,
+    });
+    res.json({ product: updated });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete product (vendor or admin)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    if (req.user.role === 'VENDOR') {
+      const vendor = await prisma.vendor.findUnique({ where: { userId: req.user.id } });
+      if (!vendor || product.vendorId !== vendor.id) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+    }
+    if (req.user.role === 'CUSTOMER') return res.status(403).json({ error: 'Not authorized' });
+    await prisma.product.delete({ where: { id: product.id } });
+    res.json({ message: 'Product deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -163,31 +163,215 @@ function VendorDashboardMain({ stats, vendor }) {
 
 function VendorProducts({ vendor }) {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [editId, setEditId] = useState(null)
+  const [form, setForm] = useState({
+    name: '', categoryId: '', price: '', salePrice: '', description: '', image: '',
+    features: '', requirements: '',
+  })
+
   useEffect(() => {
-    fetch(`/api/vendors/products`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
-      .then(r => r.json()).then(d => setProducts(d.products || []))
+    loadProducts()
+    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || [])).catch(() => {})
   }, [])
+
+  const loadProducts = async () => {
+    const res = await fetch('/api/vendors/products', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    const d = await res.json()
+    setProducts(d.products || [])
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await fetch('/api/upload/image', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: fd,
+      })
+      const data = await res.json()
+      if (data.url) setForm(p => ({ ...p, image: data.url }))
+    } catch (e) { console.error(e) }
+    setUploading(false)
+  }
+
+  const saveProduct = async () => {
+    if (!form.name || !form.price || !form.categoryId) {
+      setMsg('Name, price, and category are required')
+      return
+    }
+    setSaving(true); setMsg('')
+    try {
+      const payload = {
+        name: form.name,
+        categoryId: parseInt(form.categoryId),
+        price: parseFloat(form.price),
+        salePrice: form.salePrice ? parseFloat(form.salePrice) : null,
+        description: form.description,
+        image: form.image,
+        features: form.features,
+        requirements: form.requirements,
+      }
+      const url = editId ? `/api/products/${editId}` : '/api/vendors/products'
+      const method = editId ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) { setMsg(data.error || 'Failed to save'); setSaving(false); return }
+      setMsg(editId ? 'Product updated!' : 'Product created! Awaiting admin approval.')
+      resetForm()
+      loadProducts()
+    } catch (e) { setMsg('Error: ' + e.message) }
+    setSaving(false)
+  }
+
+  const resetForm = () => {
+    setForm({ name: '', categoryId: '', price: '', salePrice: '', description: '', image: '', features: '', requirements: '' })
+    setShowForm(false)
+    setEditId(null)
+  }
+
+  const editProduct = (p) => {
+    setForm({
+      name: p.name, categoryId: p.categoryId?.toString() || '',
+      price: p.price?.toString() || '', salePrice: p.salePrice?.toString() || '',
+      description: p.description || '', image: p.image || '', features: p.features || '', requirements: p.requirements || '',
+    })
+    setEditId(p.id)
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const deleteProduct = async (id) => {
+    if (!confirm('Delete this product?')) return
+    try {
+      await fetch(`/api/products/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      loadProducts()
+    } catch (e) { console.error(e) }
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">My Products</h2>
-        <button className="btn-primary text-sm py-2"><Plus className="w-4 h-4 inline mr-1" /> Add Product</button>
+        <button onClick={() => { resetForm(); setShowForm(!showForm) }}
+          className="btn-primary text-sm py-2"><Plus className="w-4 h-4 inline mr-1" /> {showForm ? 'Cancel' : 'Add Product'}</button>
       </div>
+
+      {msg && <div className={`p-3 rounded-lg text-sm mb-4 ${msg.includes('Error') ? 'bg-red-900/30 text-red-400' : 'bg-green-900/30 text-green-400'}`}>{msg}</div>}
+
+      {/* Product Form */}
+      {showForm && (
+        <div className="card p-6 mb-6 page-enter">
+          <h3 className="text-lg font-semibold mb-4">{editId ? 'Edit Product' : 'Add New Product'}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Product Name *</label>
+              <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="input-field" placeholder="e.g. ChatGPT Premium - 1 Year" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Category *</label>
+              <select value={form.categoryId} onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))} className="input-field">
+                <option value="">Select category...</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Price (৳) *</label>
+              <input type="number" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))} className="input-field" placeholder="1000" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Sale Price (৳)</label>
+              <input type="number" value={form.salePrice} onChange={e => setForm(p => ({ ...p, salePrice: e.target.value }))} className="input-field" placeholder="800 (optional)" />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Description</label>
+            <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+              className="input-field" rows={4} placeholder="Describe your product..." />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Features (one per line)</label>
+              <textarea value={form.features} onChange={e => setForm(p => ({ ...p, features: e.target.value }))}
+                className="input-field" rows={3} placeholder="24/7 Support&#10;Instant Delivery&#10;Lifetime Access" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Requirements</label>
+              <textarea value={form.requirements} onChange={e => setForm(p => ({ ...p, requirements: e.target.value }))}
+                className="input-field" rows={3} placeholder="Active email account" />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Product Image</label>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden border">
+                {form.image ? (
+                  <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <Package className="w-8 h-8 text-gray-400" />
+                )}
+              </div>
+              <div>
+                <label className="btn-secondary text-xs py-2 px-4 cursor-pointer inline-block">
+                  {uploading ? 'Uploading...' : 'Upload Image'}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+                {form.image && <button onClick={() => setForm(p => ({ ...p, image: '' }))} className="text-xs text-red-400 ml-2">Remove</button>}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={saveProduct} disabled={saving} className="btn-primary"><Package className="w-4 h-4 inline mr-1" /> {saving ? 'Saving...' : (editId ? 'Update Product' : 'Create Product')}</button>
+            <button onClick={resetForm} className="btn-secondary">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Products List */}
       {products.length === 0 ? (
-        <p className="text-gray-500">No products yet. Add your first product!</p>
+        <div className="card p-8 text-center">
+          <Package className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-500">No products yet. Click "Add Product" to get started!</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {products.map(p => (
-            <div key={p.id} className="card p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xl">📦</div>
-                <div>
-                  <p className="font-medium">{p.name}</p>
-                  <p className="text-sm text-gray-500">৳{p.price} · {p._count?.orderItems || 0} sold · {p._count?.reviews || 0} reviews</p>
+            <div key={p.id} className="product-card p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="w-14 h-14 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                  {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-gray-400" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{p.name}</p>
+                  <p className="text-sm text-gray-500">
+                    ৳{p.salePrice || p.price}
+                    {p.salePrice && <span className="line-through text-xs text-gray-400 ml-1">৳{p.price}</span>}
+                    {' · '}{p._count?.orderItems || 0} sold
+                    {p.category && <span> · {p.category.icon} {p.category.name}</span>}
+                  </p>
                 </div>
               </div>
-              <span className={`badge ${p.isApproved ? 'badge-success' : 'badge-warning'}`}>{p.isApproved ? 'Active' : 'Pending'}</span>
+              <div className="flex items-center gap-2 shrink-0 ml-4">
+                <span className={`badge ${p.isApproved ? 'badge-success' : 'badge-warning'}`}>{p.isApproved ? 'Active' : 'Pending'}</span>
+                <button onClick={() => editProduct(p)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" title="Edit">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </button>
+                <button onClick={() => deleteProduct(p.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500" title="Delete">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>

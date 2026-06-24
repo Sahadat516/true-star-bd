@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -176,5 +177,5 @@ function ProductsContent() {
 }
 
 export default function Products() {
-  return <AppProvider><ProductsContent /></AppProvider>
+  return <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}><AppProvider><ProductsContent /></AppProvider></Suspense>
 }
