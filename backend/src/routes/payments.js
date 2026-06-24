@@ -16,7 +16,7 @@ router.post('/initiate', auth, async (req, res) => {
     const payment = await prisma.payment.create({
       data: {
         orderId: order.id,
-        gateway,
+        gateway: gateway ? gateway.toUpperCase() : undefined,
         amount: order.total,
         status: 'PENDING',
       },

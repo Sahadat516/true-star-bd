@@ -63,7 +63,7 @@ router.post('/', auth, async (req, res) => {
         total,
         deliveryEmail: deliveryEmail || req.user.email,
         notes,
-        paymentGateway,
+        paymentGateway: paymentGateway ? paymentGateway.toUpperCase() : undefined,
         items: { create: orderItems },
       },
       include: { items: true },
