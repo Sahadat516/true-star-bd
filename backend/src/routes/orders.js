@@ -75,12 +75,26 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Get user orders
+// Get user orders (alias for /my-orders)
+router.get('/', auth, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user.id },
+      include: { items: { include: { product: { select: { id: true, name: true, slug: true, image: true, price: true } } } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ orders });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user orders (legacy)
 router.get('/my-orders', auth, async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       where: { userId: req.user.id },
-      include: { items: true },
+      include: { items: { include: { product: { select: { id: true, name: true, slug: true, image: true, price: true } } } } },
       orderBy: { createdAt: 'desc' },
     });
     res.json({ orders });
