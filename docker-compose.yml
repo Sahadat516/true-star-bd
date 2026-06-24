@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: truestarbd-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: truestarbd
+      POSTGRES_PASSWORD: truestarbd123
+      POSTGRES_DB: truestarbd
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: truestarbd-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: truestarbd-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://truestarbd:truestarbd123@postgres:5432/truestarbd
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: truestarbd-super-secret-key-2026
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: truestarbd-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: truestarbd-ai
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    depends_on:
+      - redis
+    environment:
+      REDIS_URL: redis://redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./ai-service:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  redis_data:

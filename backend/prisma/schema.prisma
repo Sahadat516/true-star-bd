@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+  CUSTOMER
+  VENDOR
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentGateway {
+  STRIPE
+  SSLCOMMERZ
+  BKASH
+  NAGAD
+  ROCKET
+  PAYPAL
+  BYBIT
+  BINANCE
+  BANK_TRANSFER
+  AAMARPAY
+  PORTWALLET
+  USDT
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  phone           String?
+  password        String
+  firstName       String
+  lastName        String?
+  role            UserRole  @default(CUSTOMER)
+  status          UserStatus @default(PENDING_VERIFICATION)
+  avatar          String?
+  emailVerified   Boolean   @default(false)
+  phoneVerified   Boolean   @default(false)
+  twoFactorEnabled Boolean  @default(false)
+  country         String?
+  language        String    @default("en")
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vendor          Vendor?
+  orders          Order[]
+  reviews         Review[]
+  chatMessages    ChatMessage[]
+  notifications   Notification[]
+  supportTickets  SupportTicket[]
+  fraudLogs       FraudLog[]
+}
+
+model Vendor {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  businessName    String
+  businessEmail   String?
+  businessPhone   String?
+  tradeLicense    String?
+  nidNumber       String?
+  address         String?
+  website         String?
+  description     String?
+  logo            String?
+  coverImage      String?
+  commission      Float     @default(10.0)
+  totalEarnings   Float     @default(0.0)
+  pendingBalance  Float     @default(0.0)
+  totalSales      Int       @default(0)
+  rating          Float     @default(0.0)
+  isApproved      Boolean   @default(false)
+  isFeatured      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+  products        Product[]
+  settlements     Settlement[]
+  reviews         Review[]
+}
+
+model Category {
+  id              String    @id @default(uuid())
+  name            String
+  slug            String    @unique
+  description     String?
+  image           String?
+  icon            String?
+  parentId        String?
+  sortOrder       Int       @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  parent          Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryHierarchy")
+  products        Product[]
+}
+
+model Product {
+  id              String    @id @default(uuid())
+  vendorId        String
+  categoryId      String
+  name            String
+  slug            String    @unique
+  description     String?
+  shortDescription String?
+  type            String    @default("digital")
+  price           Float
+  salePrice       Float?
+  currency        String    @default("BDT")
+  stock           Int       @default(-1)
+  image           String?
+  images          String   @default("[]")
+  tags            String   @default("[]")
+  isActive        Boolean   @default(true)
+  isFeatured      Boolean   @default(false)
+  isApproved      Boolean   @default(false)
+  seoTitle        String?
+  seoDescription  String?
+  deliveryType    String    @default("instant")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+  category        Category  @relation(fields: [categoryId], references: [id])
+  variants        ProductVariant[]
+  orderItems      OrderItem[]
+  reviews         Review[]
+}
+
+model ProductVariant {
+  id              String    @id @default(uuid())
+  productId       String
+  name            String
+  price           Float
+  salePrice       Float?
+  stock           Int       @default(-1)
+  attributes      Json?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+}
+
+model Order {
+  id              String    @id @default(uuid())
+  orderNumber     String    @unique
+  userId          String
+  vendorId        String?
+  subtotal        Float
+  vat             Float     @default(0)
+  serviceCharge   Float     @default(0)
+  total           Float
+  currency        String    @default("BDT")
+  status          OrderStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentGateway  PaymentGateway?
+  transactionId   String?
+  deliveryStatus  String    @default("pending")
+  deliveryEmail   String?
+  notes           String?
+  couponCode      String?
+  discount        Float     @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  payment         Payment?
+}
+
+model OrderItem {
+  id              String    @id @default(uuid())
+  orderId         String
+  productId       String
+  variantId       String?
+  productName     String
+  quantity        Int       @default(1)
+  price           Float
+  total           Float
+  vendorEarnings  Float     @default(0)
+  createdAt       DateTime  @default(now())
+
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id])
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+}
+
+model Payment {
+  id              String    @id @default(uuid())
+  orderId         String    @unique
+  gateway         PaymentGateway
+  gatewayTransactionId String?
+  amount          Float
+  currency        String    @default("BDT")
+  status          PaymentStatus @default(PENDING)
+  gatewayResponse Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  order           Order     @relation(fields: [orderId], references: [id])
+}
+
+model Settlement {
+  id              String    @id @default(uuid())
+  vendorId        String
+  amount          Float
+  commission      Float
+  netAmount       Float
+  status          SettlementStatus @default(PENDING)
+  periodStart     DateTime
+  periodEnd       DateTime
+  settledAt       DateTime?
+  transactionId   String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  vendor          Vendor    @relation(fields: [vendorId], references: [id])
+}
+
+model Review {
+  id              String    @id @default(uuid())
+  productId       String
+  userId          String
+  vendorId        String?
+  rating          Int       @default(5)
+  title           String?
+  comment         String?
+  images          String   @default("[]")
+  isVerifiedPurchase Boolean @default(false)
+  isApproved      Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id])
+  vendor          Vendor?   @relation(fields: [vendorId], references: [id])
+}
+
+model ChatMessage {
+  id              String    @id @default(uuid())
+  chatId          String
+  senderId        String
+  receiverId      String?
+  message         String
+  messageType     String    @default("text")
+  fileUrl         String?
+  isRead          Boolean   @default(false)
+  isAiGenerated   Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  sender          User      @relation(fields: [senderId], references: [id])
+}
+
+model Notification {
+  id              String    @id @default(uuid())
+  userId          String
+  title           String
+  message         String
+  type            String    @default("info")
+  link            String?
+  isRead          Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model SupportTicket {
+  id              String    @id @default(uuid())
+  userId          String
+  subject         String
+  description     String
+  priority        String    @default("normal")
+  status          String    @default("open")
+  assignedTo      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model FraudLog {
+  id              String    @id @default(uuid())
+  userId          String
+  action          String
+  reason          String
+  severity        String    @default("low")
+  ipAddress       String?
+  userAgent       String?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model Translation {
+  id              String    @id @default(uuid())
+  key             String
+  language        String
+  value           String
+  namespace       String    @default("common")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([key, language, namespace])
+}
+
+model SiteSetting {
+  id              String    @id @default(uuid())
+  key             String    @unique
+  value           String
+  type            String    @default("text")
+  group           String    @default("general")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model PageContent {
+  id              String    @id @default(uuid())
+  slug            String    @unique
+  title           String
+  content         String
+  metaTitle       String?
+  metaDescription String?
+  isPublished     Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model ActivityLog {
+  id              String    @id @default(uuid())
+  userId          String?
+  action          String
+  entity          String?
+  entityId        String?
+  description     String?
+  ipAddress       String?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+}

@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+*.db
+*.db-journal
+dist/
+build/
+.DS_Store
+Thumbs.db
+*.log
+backend/public/uploads/*
+!backend/public/uploads/.gitkeep

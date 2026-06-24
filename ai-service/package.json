@@ -1,0 +1,16 @@
+{
+  "name": "true-star-bd-ai-service",
+  "version": "1.0.0",
+  "description": "AI Chat Service for True Star BD",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "ioredis": "^5.4.0"
+  }
+}

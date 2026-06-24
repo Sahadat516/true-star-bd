@@ -1,0 +1,12 @@
+{
+  "name": "true-star-bd",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "cd frontend && cmd /c npm install && cd ../backend && cmd /c npm install && cd ../ai-service && cmd /c npm install",
+    "dev:backend": "cd backend && cmd /c npm run dev",
+    "dev:frontend": "cd frontend && cmd /c npm run dev",
+    "dev:ai": "cd ai-service && cmd /c npm run dev",
+    "setup": "cmd /c npm run install:all && cd backend && npx prisma generate && npx prisma db push && npx prisma db seed"
+  }
+}

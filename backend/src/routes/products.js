@@ -1,0 +1,93 @@
+const express = require('express');
+const { PrismaClient } = require('@prisma/client');
+const { auth } = require('../middleware/auth');
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
+// Get all products
+router.get('/', async (req, res) => {
+  try {
+    const { category, search, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
+    const where = { isActive: true, isApproved: true };
+
+    if (category) where.categoryId = category;
+    if (search) where.name = { contains: search, mode: 'insensitive' };
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) where.price.gte = parseFloat(minPrice);
+      if (maxPrice) where.price.lte = parseFloat(maxPrice);
+    }
+
+    let orderBy = { createdAt: 'desc' };
+    if (sort === 'price_asc') orderBy = { price: 'asc' };
+    if (sort === 'price_desc') orderBy = { price: 'desc' };
+    if (sort === 'popular') orderBy = { reviews: { _count: 'desc' } };
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: parseInt(limit),
+        include: {
+          category: true,
+          vendor: { select: { businessName: true, rating: true } },
+          variants: { where: { isActive: true } },
+          reviews: { select: { rating: true } },
+          _count: { select: { reviews: true, orderItems: true } },
+        },
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    const productsWithRating = products.map(p => ({
+      ...p,
+      avgRating: p.reviews.length ? p.reviews.reduce((a, r) => a + r.rating, 0) / p.reviews.length : 0,
+      salesCount: p._count.orderItems,
+    }));
+
+    res.json({ products: productsWithRating, total, pages: Math.ceil(total / limit), currentPage: parseInt(page) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get single product
+router.get('/:slug', async (req, res) => {
+  try {
+    const product = await prisma.product.findUnique({
+      where: { slug: req.params.slug },
+      include: {
+        category: true,
+        vendor: { select: { id: true, businessName: true, logo: true, rating: true, totalSales: true, isFeatured: true } },
+        variants: { where: { isActive: true } },
+        reviews: {
+          include: { user: { select: { firstName: true, lastName: true, avatar: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+        _count: { select: { reviews: true, orderItems: true } },
+      },
+    });
+
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    const avgRating = product.reviews.length
+      ? product.reviews.reduce((a, r) => a + r.rating, 0) / product.reviews.length
+      : 0;
+
+    // Related products
+    const related = await prisma.product.findMany({
+      where: { categoryId: product.categoryId, id: { not: product.id }, isActive: true },
+      take: 6,
+      include: { variants: { where: { isActive: true } }, reviews: { select: { rating: true } } },
+    });
+
+    res.json({ product: { ...product, avgRating }, related });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
