@@ -128,18 +128,29 @@ async function main() {
     },
   });
 
-  // Create Categories
+  // Create Categories - G2G.com inspired
   const categories = [
-    { name: 'AI Tools', slug: 'ai-tools', description: 'Premium AI tool subscriptions', icon: '🤖', sortOrder: 1 },
-    { name: 'ChatGPT', slug: 'chatgpt', description: 'ChatGPT subscriptions', icon: '💬', parentSlug: 'ai-tools', sortOrder: 1 },
-    { name: 'Google AI', slug: 'google-ai', description: 'Google AI & Gemini', icon: '🔍', parentSlug: 'ai-tools', sortOrder: 2 },
-    { name: 'Design & Creative', slug: 'design-creative', description: 'Design tools', icon: '🎨', sortOrder: 3 },
-    { name: 'Streaming & OTT', slug: 'streaming-ott', description: 'Netflix, YouTube Premium', icon: '📺', sortOrder: 4 },
-    { name: 'Windows & Software', slug: 'windows-software', description: 'Windows licenses & software', icon: '💻', sortOrder: 5 },
-    { name: 'Gift Cards', slug: 'gift-cards', description: 'Digital gift cards', icon: '🎁', sortOrder: 6 },
-    { name: 'Education', slug: 'education', description: 'Educational tools & courses', icon: '📚', sortOrder: 7 },
-    { name: 'WordPress', slug: 'wordpress', description: 'WordPress themes & plugins', icon: '🌐', sortOrder: 8 },
-    { name: 'VPN & Security', slug: 'vpn-security', description: 'VPN & security tools', icon: '🔒', sortOrder: 9 },
+    // Main categories
+    { name: 'Gift Cards', slug: 'gift-cards', description: 'Digital gift cards for gaming, shopping & more', icon: '🎁', sortOrder: 1 },
+    { name: 'Games', slug: 'games', description: 'Game activation keys, credit top-ups & subscriptions', icon: '🎮', sortOrder: 2 },
+    { name: 'Software & Apps', slug: 'software-apps', description: 'Software licenses, subscriptions & apps', icon: '💻', sortOrder: 3 },
+    { name: 'AI Tools', slug: 'ai-tools', description: 'Premium AI tool subscriptions & credits', icon: '🤖', sortOrder: 4 },
+    { name: 'Gaming', slug: 'gaming', description: 'Game coins, items, accounts & boosting', icon: '🕹️', sortOrder: 5 },
+    { name: 'Top Up', slug: 'top-up', description: 'Mobile & game top-up services', icon: '📱', sortOrder: 6 },
+    { name: 'Telco', slug: 'telco', description: 'Mobile top-up, eSIM & bill payments', icon: '📞', sortOrder: 7 },
+    { name: 'Streaming', slug: 'streaming', description: 'Netflix, YouTube, Spotify & more', icon: '📺', sortOrder: 8 },
+    { name: 'Education', slug: 'education', description: 'Online courses & educational tools', icon: '📚', sortOrder: 9 },
+    { name: 'VPN & Security', slug: 'vpn-security', description: 'VPN & cybersecurity tools', icon: '🔒', sortOrder: 10 },
+
+    // Sub-categories
+    { name: 'ChatGPT', slug: 'chatgpt', description: 'ChatGPT Plus & Pro subscriptions', icon: '💬', parentSlug: 'ai-tools', sortOrder: 1 },
+    { name: 'Google AI', slug: 'google-ai', description: 'Google Gemini & AI tools', icon: '🔍', parentSlug: 'ai-tools', sortOrder: 2 },
+    { name: 'Design & Creative', slug: 'design-creative', description: 'Canva, Adobe & creative tools', icon: '🎨', parentSlug: 'software-apps', sortOrder: 3 },
+    { name: 'Antivirus', slug: 'antivirus', description: 'Antivirus & internet security', icon: '🛡️', parentSlug: 'vpn-security', sortOrder: 1 },
+    { name: 'Game Coins', slug: 'game-coins', description: 'Virtual currencies & in-game gold', icon: '💰', parentSlug: 'gaming', sortOrder: 1 },
+    { name: 'Game Items', slug: 'game-items', description: 'Weapons, skins & vanity items', icon: '⚔️', parentSlug: 'gaming', sortOrder: 2 },
+    { name: 'Game Accounts', slug: 'game-accounts', description: 'Game & leveled accounts', icon: '👤', parentSlug: 'gaming', sortOrder: 3 },
+    { name: 'Boosting', slug: 'boosting', description: 'Rank boosting & power leveling', icon: '🚀', parentSlug: 'gaming', sortOrder: 4 },
   ];
 
   for (const cat of categories) {

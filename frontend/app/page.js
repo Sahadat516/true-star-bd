@@ -65,14 +65,14 @@ function HomeContent() {
                   </div>
                 </div>
                 {/* Quick categories */}
-                <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-                  {['ChatGPT', 'Gemini', 'Claude', 'Netflix', 'YouTube'].map(cat => (
-                    <Link key={cat} href={`/products?search=${cat}`}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white/80 hover:text-white text-sm transition-all">
-                      {cat}
-                    </Link>
-                  ))}
-                </div>
+          <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+            {['ChatGPT', 'Gemini', 'Claude', 'Netflix', 'YouTube Premium', 'Canva', 'Spotify', 'Office 365'].map(cat => (
+              <Link key={cat} href={`/products?search=${cat}`}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white/80 hover:text-white text-sm transition-all">
+                {cat}
+              </Link>
+            ))}
+          </div>
               </div>
               <div className="hidden lg:block">
                 <div className="grid grid-cols-2 gap-4">
@@ -83,21 +83,31 @@ function HomeContent() {
                       <p className="text-sm text-white/60">ChatGPT, Gemini, Claude</p>
                     </div>
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hover:bg-white/20 transition-all cursor-pointer">
-                      <div className="text-3xl mb-2">📺</div>
-                      <h3 className="font-semibold">Streaming</h3>
-                      <p className="text-sm text-white/60">Netflix, YouTube Premium</p>
-                    </div>
-                  </div>
-                  <div className="space-y-4 mt-8">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hover:bg-white/20 transition-all cursor-pointer">
-                      <div className="text-3xl mb-2">💻</div>
-                      <h3 className="font-semibold">Software</h3>
-                      <p className="text-sm text-white/60">Windows, Office 365</p>
+                      <div className="text-3xl mb-2">🎮</div>
+                      <h3 className="font-semibold">Gaming</h3>
+                      <p className="text-sm text-white/60">Coins, Items, Accounts</p>
                     </div>
                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hover:bg-white/20 transition-all cursor-pointer">
                       <div className="text-3xl mb-2">🎁</div>
                       <h3 className="font-semibold">Gift Cards</h3>
                       <p className="text-sm text-white/60">Global gift cards</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4 mt-8">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hover:bg-white/20 transition-all cursor-pointer">
+                      <div className="text-3xl mb-2">📺</div>
+                      <h3 className="font-semibold">Streaming</h3>
+                      <p className="text-sm text-white/60">Netflix, YouTube, Spotify</p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hover:bg-white/20 transition-all cursor-pointer">
+                      <div className="text-3xl mb-2">💻</div>
+                      <h3 className="font-semibold">Software</h3>
+                      <p className="text-sm text-white/60">Windows, Office, Antivirus</p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hover:bg-white/20 transition-all cursor-pointer">
+                      <div className="text-3xl mb-2">📞</div>
+                      <h3 className="font-semibold">Telco</h3>
+                      <p className="text-sm text-white/60">Mobile Top-up, eSIM</p>
                     </div>
                   </div>
                 </div>
@@ -146,13 +156,21 @@ function HomeContent() {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {categories.map(cat => (
-              <Link key={cat.id} href={`/category/${cat.slug}`} className="card-hover p-5 text-center group">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{cat.icon || '📦'}</div>
-                <h3 className="font-semibold text-sm">{cat.name}</h3>
-                <p className="text-xs text-gray-500 mt-1">{cat._count?.products || 0} items</p>
-              </Link>
-            ))}
+            {categories.filter(c => !c.parentId).map(cat => {
+              const subs = categories.filter(sub => sub.parentId === cat.id)
+              return (
+                <Link key={cat.id} href={`/category/${cat.slug}`} className="category-card card-hover p-5 text-center group">
+                  <div className="category-icon-wrapper text-4xl mb-3">{cat.icon || '📦'}</div>
+                  <h3 className="font-semibold text-sm">{cat.name}</h3>
+                  <p className="text-xs text-gray-500 mt-1">{cat._count?.products || subs.length || 0} items</p>
+                  {subs.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 hidden group-hover:block">
+                      <p className="text-[10px] text-primary-500">{subs.slice(0, 3).map(s => s.name).join(', ')}{subs.length > 3 ? '...' : ''}</p>
+                    </div>
+                  )}
+                </Link>
+              )
+            })}
           </div>
         </section>
 

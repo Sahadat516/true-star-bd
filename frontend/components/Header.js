@@ -205,6 +205,45 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Category Navigation - G2G style */}
+      <div className="hidden lg:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center overflow-x-auto gap-0">
+            <Link href="/products" className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b-2 border-transparent hover:border-primary-500 transition-all whitespace-nowrap">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              All Categories
+            </Link>
+            {categories.filter(c => !c.parentId).slice(0, 8).map(cat => (
+              <div key={cat.id} className="relative group">
+                <Link href={`/category/${cat.slug}`}
+                  className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b-2 border-transparent hover:border-primary-500 transition-all whitespace-nowrap">
+                  <span>{cat.icon}</span>
+                  <span>{cat.name}</span>
+                </Link>
+                {/* Dropdown for subcategories */}
+                {categories.filter(sub => sub.parentId === cat.id).length > 0 && (
+                  <div className="absolute top-full left-0 mt-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 min-w-[220px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    {categories.filter(sub => sub.parentId === cat.id).map(sub => (
+                      <Link key={sub.id} href={`/category/${sub.slug}`}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <span className="text-lg">{sub.icon}</span>
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-gray-200">{sub.name}</p>
+                          <p className="text-xs text-gray-500">{sub.description}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            <Link href="/products" className="ml-auto flex items-center gap-1 px-3 py-2.5 text-xs text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap">
+              View All <ChevronDown className="w-3 h-3 rotate-[-90deg]" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Mobile search */}
       {showSearch && (
         <div className="lg:hidden px-4 pb-3 animate-slide-up">
