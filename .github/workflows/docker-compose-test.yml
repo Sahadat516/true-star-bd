@@ -1,0 +1,45 @@
+name: Development Workflow
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build services
+        run: docker compose build
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for backend..."
+          for i in {1..30}; do
+            curl -f http://localhost:5000 2>/dev/null && break
+            sleep 2
+          done
+
+      - name: Check service status
+        run: docker compose ps
+
+      - name: Verify database connectivity
+        run: |
+          docker compose exec -T postgres psql -U truestarbd -d truestarbd -c "SELECT 1;"
+
+      - name: View logs for any failed services
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v

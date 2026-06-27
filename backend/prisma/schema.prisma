@@ -74,6 +74,20 @@ model User {
   twoFactorEnabled Boolean  @default(false)
   country         String?
   language        String    @default("en")
+
+  // Identification & Personal Info
+  nidNumber       String?
+  passportNumber  String?
+  dateOfBirth     String?
+  gender          String?
+  address         String?
+  businessType    String?     // reseller, wholesaler, vendor, staff
+  
+  // Business Verification
+  tradeLicense    String?
+  taxId           String?
+  businessDocuments String?   // JSON array of file URLs
+
   lastLogin       DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

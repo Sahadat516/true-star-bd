@@ -19,7 +19,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 app.use('/api/', limiter);
 
 // Routes
@@ -67,3 +67,4 @@ httpServer.listen(PORT, () => {
   console.log(`True Star BD API running on port ${PORT}`);
   console.log(`Health: http://localhost:${PORT}/api/health`);
 });
+

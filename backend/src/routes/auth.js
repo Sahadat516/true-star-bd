@@ -15,25 +15,39 @@ router.post('/signup', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'Email already registered' });
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        phone,
-        role: role || 'CUSTOMER',
-      },
-    });
 
-    // If vendor, create vendor profile
-    if (role === 'VENDOR') {
+    const userData = {
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      phone,
+      role: role || 'CUSTOMER',
+      nidNumber: req.body.nidNumber || null,
+      passportNumber: req.body.passportNumber || null,
+      dateOfBirth: req.body.dateOfBirth || null,
+      gender: req.body.gender || null,
+      address: req.body.address || null,
+      businessType: req.body.businessType || null,
+      tradeLicense: req.body.tradeLicense || null,
+      taxId: req.body.taxId || null,
+      businessDocuments: req.body.businessDocuments || null,
+    };
+
+    const user = await prisma.user.create({ data: userData });
+
+    // Create vendor profile if role is VENDOR/SELLER/RESELLER/WHOLESALER
+    if (['VENDOR', 'SELLER', 'RESELLER', 'WHOLESALER'].includes(role)) {
       await prisma.vendor.create({
         data: {
           userId: user.id,
           businessName: req.body.businessName || `${firstName}'s Business`,
           businessEmail: email,
           businessPhone: phone,
+          tradeLicense: req.body.tradeLicense || null,
+          nidNumber: req.body.nidNumber || null,
+          address: req.body.address || null,
+          website: req.body.website || null,
         },
       });
     }
@@ -44,7 +58,10 @@ router.post('/signup', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ user: { id: user.id, email: user.email, firstName: user.firstName, role: user.role }, token });
+    res.status(201).json({
+      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, nidNumber: user.nidNumber, passportNumber: user.passportNumber },
+      token,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -77,7 +94,12 @@ router.post('/signin', async (req, res) => {
     }
 
     res.json({
-      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role, avatar: user.avatar, country: user.country },
+      user: {
+        id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName,
+        role: user.role, avatar: user.avatar, country: user.country,
+        nidNumber: user.nidNumber, passportNumber: user.passportNumber,
+        businessType: user.businessType, status: user.status,
+      },
       vendor,
       token,
     });

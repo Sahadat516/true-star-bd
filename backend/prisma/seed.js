@@ -19,6 +19,7 @@ async function main() {
       status: 'ACTIVE',
       emailVerified: true,
       country: 'Bangladesh',
+      gender: 'male',
     },
   });
 
@@ -35,6 +36,9 @@ async function main() {
       status: 'ACTIVE',
       emailVerified: true,
       country: 'Bangladesh',
+      nidNumber: '1234567890',
+      gender: 'female',
+      address: '73 Lion Shopping Complex, Dhaka',
     },
   });
 
@@ -51,6 +55,8 @@ async function main() {
       status: 'ACTIVE',
       emailVerified: true,
       country: 'Bangladesh',
+      phone: '+880-1812-054785',
+      address: 'Monipuripara, Airport Road, Tejgaon, Dhaka',
     },
   });
 
@@ -67,6 +73,10 @@ async function main() {
       status: 'ACTIVE',
       emailVerified: true,
       country: 'Bangladesh',
+      nidNumber: '1990123456789',
+      businessType: 'reseller',
+      tradeLicense: 'TL-2024-001',
+      address: 'Dhaka, Bangladesh',
     },
   });
 
@@ -97,6 +107,9 @@ async function main() {
       status: 'ACTIVE',
       emailVerified: true,
       country: 'Bangladesh',
+      nidNumber: '1991123456789',
+      businessType: 'vendor',
+      tradeLicense: 'TL-2024-002',
     },
   });
 
