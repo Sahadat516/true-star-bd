@@ -77,6 +77,11 @@ enum PaymentGateway {
   UPI
   GOOGLE_PAY
   APPLE_PAY
+  VISA
+  MASTERCARD
+  SKRILL
+  NETELLER
+  PERFECT_MONEY
 }
 
 enum SettlementStatus {
@@ -158,6 +163,7 @@ model Vendor {
   sellerStatus    SellerStatus @default(OFFLINE)
   lastSeen        DateTime?
   insuranceEnabled Boolean   @default(false)
+  paymentMethods  String?
   isApproved      Boolean     @default(false)
   isFeatured      Boolean     @default(false)
   createdAt       DateTime    @default(now())

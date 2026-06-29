@@ -89,6 +89,11 @@ router.get('/gateways', (req, res) => {
       { id: 'binance', name: 'Binance Pay', type: 'crypto', countries: ['global'], active: true },
       { id: 'bybit', name: 'Bybit', type: 'crypto', countries: ['global'], active: true },
       { id: 'usdt', name: 'USDT (TRC20/BEP20)', type: 'crypto', countries: ['global'], active: true },
+      { id: 'visa', name: 'Visa', type: 'card', countries: ['global'], active: true },
+      { id: 'mastercard', name: 'Mastercard', type: 'card', countries: ['global'], active: true },
+      { id: 'skrill', name: 'Skrill', type: 'wallet', countries: ['global'], active: true },
+      { id: 'neteller', name: 'Neteller', type: 'wallet', countries: ['global'], active: true },
+      { id: 'perfect_money', name: 'Perfect Money', type: 'wallet', countries: ['global'], active: true },
       { id: 'bank_transfer', name: 'Bank Transfer', type: 'bank', countries: ['global'], active: true },
     ],
   });

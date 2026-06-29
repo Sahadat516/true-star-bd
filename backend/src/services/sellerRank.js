@@ -150,6 +150,7 @@ async function getStorePage(vendorId) {
     sellerStatus: vendor.sellerStatus,
     lastSeen: vendor.lastSeen,
     insuranceEnabled: vendor.insuranceEnabled,
+    paymentMethods: vendor.paymentMethods ? JSON.parse(vendor.paymentMethods) : null,
     isApproved: vendor.isApproved,
     isFeatured: vendor.isFeatured,
     daysActive,

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '../../../components/AppContext'
 import Header from '../../../components/Header'
+import GatewayIcon from '../../../components/GatewayLogos'
 import Footer from '../../../components/Footer'
 import GatewayIcon from '../../../components/GatewayLogos'
 import ShareButtons from '../../../components/ShareButtons'
@@ -483,6 +484,12 @@ function ProductDetailContent({ params }) {
                         <Shield className="w-3.5 h-3.5" /> Seller offers purchase insurance — refund if account is compromised within insured period
                       </div>
                     )}
+                    <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mr-1">Accepts:</span>
+                      {['bkash','nagad','rocket','visa','mastercard','binance','usdt','paypal'].map(gw => (
+                        <GatewayIcon key={gw} id={gw} name={gw} iconOnly />
+                      ))}
+                    </div>
                     <div className="flex gap-3 mt-4">
                       <Link href={`/vendor/${product.vendor.id}`} className="btn-primary text-xs py-2.5 px-5">
                         <Store className="w-3.5 h-3.5" /> View All Products

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useApp } from '../../../components/AppContext'
 import Header from '../../../components/Header'
 import Footer from '../../../components/Footer'
-import { Star, Shield, Award, Clock, ChevronRight, Loader2, Store, Package, ShoppingBag, BadgeCheck, MessageCircle, MapPin, Calendar, Zap, HeadphonesIcon, TrendingUp, Users, CheckCircle } from 'lucide-react'
+import { Star, Shield, Award, Clock, ChevronRight, Loader2, Store, Package, ShoppingBag, BadgeCheck, MessageCircle, MapPin, Calendar, Zap, HeadphonesIcon, TrendingUp, Users, CheckCircle, CreditCard } from 'lucide-react'
+import GatewayIcon from '../../../components/GatewayLogos'
 
 const RANK_COLORS = {
   NORMAL: '#9CA3AF', COMMON: '#22C55E', UNCOMMON: '#3B82F6',
@@ -152,6 +153,22 @@ function VendorContent({ params }) {
             </div>
           </div>
         )}
+
+        {/* Payment Methods */}
+        <div className="card p-5 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard className="w-5 h-5 text-primary-600" />
+            <h3 className="font-semibold">Accepted Payment Methods</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {['bkash','nagad','rocket','visa','mastercard','binance','usdt','paypal','skrill','neteller'].map(gw => (
+              <div key={gw} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
+                <GatewayIcon id={gw} name={gw} iconOnly />
+                <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 capitalize">{gw.replace('_', ' ')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Products Grid */}
         <div className="flex items-center justify-between mb-6">

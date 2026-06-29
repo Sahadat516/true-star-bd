@@ -18,6 +18,11 @@ const FALLBACK_BY_ID = {
   google_pay: { bg: '#4285F4', text: 'GPay' },
   apple_pay: { bg: '#000', text: 'Apple' },
   upi: { bg: '#097C4E', text: 'UPI' },
+  visa: { bg: '#1A1F71', text: 'Visa' },
+  mastercard: { bg: '#EB001B', text: 'MC' },
+  skrill: { bg: '#7B2D8E', text: 'Skrill' },
+  neteller: { bg: '#8DC63F', text: 'Net' },
+  perfect_money: { bg: '#2E7D32', text: 'PM' },
 }
 
 const LOGO_SOURCES = {
@@ -30,6 +35,11 @@ const LOGO_SOURCES = {
   usdt: ['https://upload.wikimedia.org/wikipedia/commons/4/4a/Tether_Logo.svg'],
   google_pay: ['https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg'],
   apple_pay: ['https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg'],
+  visa: ['https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg'],
+  mastercard: ['https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg'],
+  skrill: ['https://upload.wikimedia.org/wikipedia/commons/3/30/Skrill_logo.svg'],
+  neteller: ['https://upload.wikimedia.org/wikipedia/commons/e/e3/Neteller_logo.svg'],
+  perfect_money: [],
 }
 
 function SvgFallback({ id }) {
