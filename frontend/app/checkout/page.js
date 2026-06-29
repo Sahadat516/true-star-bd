@@ -26,7 +26,7 @@ function CheckoutContent() {
   }, [])
 
   const groupedGateways = gateways.reduce((acc, g) => {
-    const typeMap = { card: 'Card Payments', mobile: 'Mobile Banking (BD)', wallet: 'International Wallets', crypto: 'Cryptocurrency', bank: 'Bank Transfer', 'card+mobile': 'Card & Mobile' }
+    const typeMap = { mobile: 'Mobile Banking', card: 'Credit / Debit Card', wallet: 'Digital Wallets', crypto: 'Cryptocurrency', bank: 'Bank Transfer' }
     const group = typeMap[g.type] || 'Other'
     if (!acc[group]) acc[group] = []
     acc[group].push(g)

@@ -74,6 +74,9 @@ enum PaymentGateway {
   AAMARPAY
   PORTWALLET
   USDT
+  UPI
+  GOOGLE_PAY
+  APPLE_PAY
 }
 
 enum SettlementStatus {

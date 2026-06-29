@@ -43,6 +43,17 @@ const LOGO_SOURCES = {
     'https://logo.clearbit.com/tether.to',
     'https://upload.wikimedia.org/wikipedia/commons/4/4a/Tether_Logo.svg',
   ],
+  google_pay: [
+    'https://logo.clearbit.com/pay.google.com',
+    'https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg',
+  ],
+  apple_pay: [
+    'https://logo.clearbit.com/apple.com',
+    'https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg',
+  ],
+  upi: [
+    'https://logo.clearbit.com/npci.org.in',
+  ],
 }
 
 function FallbackLogo({ id }) {
@@ -59,6 +70,9 @@ function FallbackLogo({ id }) {
     portwallet: { bg: '#2E86C1', text: 'Port' },
     bank_transfer: { bg: '#555', text: 'Bank' },
     usdt: { bg: '#26A17B', text: 'USDT' },
+    google_pay: { bg: '#4285F4', text: 'GPay' },
+    apple_pay: { bg: '#000', text: 'Apple' },
+    upi: { bg: '#097C4E', text: 'UPI' },
   }[id] || { bg: '#999', text: '?' }
   return (
     <svg viewBox="0 0 40 28" className="w-8 h-6 shrink-0">
