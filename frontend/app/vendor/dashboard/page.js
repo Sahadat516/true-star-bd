@@ -47,6 +47,7 @@ function VendorDashboardContent() {
     { id: 'products', label: 'Products', icon: Package },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'earnings', label: 'Earnings', icon: DollarSign },
+    { id: 'payouts', label: 'Payouts', icon: Wallet, href: '/vendor/payouts' },
     { id: 'settings', label: 'Settings', icon: Settings },
   ]
 
@@ -83,7 +84,11 @@ function VendorDashboardContent() {
               <p className="text-xs text-gray-500">{vendor?.totalSales || 0} sales</p>
             </div>
             <nav className="space-y-1">
-              {tabs.map(tab => (
+              {tabs.map(tab => tab.href ? (
+                <Link key={tab.id} href={tab.href} className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <tab.icon className="w-4 h-4" /> {tab.label}
+                </Link>
+              ) : (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all ${activeTab === tab.id ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                   <tab.icon className="w-4 h-4" /> {tab.label}
@@ -106,7 +111,11 @@ function VendorDashboardContent() {
             <div className="absolute inset-0 bg-black/50" />
             <div className="absolute left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 p-4 shadow-xl" onClick={e => e.stopPropagation()}>
               <button onClick={() => setSidebarOpen(false)} className="mb-4"><X className="w-5 h-5" /></button>
-              {tabs.map(tab => (
+              {tabs.map(tab => tab.href ? (
+                <Link key={tab.id} href={tab.href} onClick={() => setSidebarOpen(false)} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <tab.icon className="w-4 h-4" /> {tab.label}
+                </Link>
+              ) : (
                 <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSidebarOpen(false) }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
                   <tab.icon className="w-4 h-4" /> {tab.label}

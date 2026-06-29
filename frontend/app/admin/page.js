@@ -16,13 +16,15 @@ function AdminContent() {
   const [data, setData] = useState({})
 
   useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (!token) { router.push('/signin'); return }
     if (authLoading) return;
     if (!user || !['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role)) {
       router.push('/signin')
       return
     }
     loadDashboard()
-  }, [user])
+  }, [user, authLoading])
 
   const loadDashboard = async () => {
     try {
@@ -47,6 +49,7 @@ function AdminContent() {
     { id: 'device-access', label: 'Device Access', icon: Smartphone },
     { id: 'fraud', label: 'Fraud Detection', icon: AlertTriangle },
     { id: 'ai-monitor', label: 'AI Monitor', icon: TrendingUp },
+    { id: 'payouts', label: 'Payouts', icon: DollarSign },
     { id: 'disputes', label: 'Disputes', icon: Shield },
     { id: 'reports', label: 'Reports', icon: BookOpen },
     { id: 'settings', label: 'System', icon: Settings },
@@ -107,6 +110,7 @@ function AdminContent() {
           {activeTab === 'pages' && <PagesEditor />}
           {activeTab === 'site-settings' && <SiteSettingsEditor />}
           {activeTab === 'device-access' && <DeviceAccessPanel />}
+          {activeTab === 'payouts' && <PayoutsPanel />}
           {activeTab === 'disputes' && <DisputesPanel />}
           {activeTab === 'fraud' && <FraudPanel />}
           {activeTab === 'ai-monitor' && <AIMonitorPanel />}
@@ -679,6 +683,92 @@ function ReportsPanel() {
           <div className="bg-gray-700/50 rounded-lg p-3 text-center"><p className="text-2xl font-bold">৳{report.netRevenue?.toLocaleString()}</p><p className="text-xs text-gray-400">Net Revenue</p></div>
         </div>
       ) : <p className="text-gray-400">Loading...</p>}
+    </div>
+  )
+}
+
+function PayoutsPanel() {
+  const [payouts, setPayouts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('')
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+  useEffect(() => {
+    const url = filter ? `/api/payouts/admin?status=${filter}` : '/api/payouts/admin'
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => setPayouts(d.payouts || [])).catch(() => {}).finally(() => setLoading(false))
+  }, [filter])
+
+  const handleAction = async (id, action) => {
+    const reason = action === 'reject' ? prompt('Rejection reason:') : null
+    if (action === 'reject' && !reason) return
+    const txId = action === 'complete' ? prompt('Transaction ID (optional):') : null
+    try {
+      const res = await fetch(`/api/payouts/admin/${id}/${action}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(action === 'reject' ? { rejectionReason: reason } : action === 'complete' ? { transactionId: txId || undefined } : {}),
+      })
+      if (res.ok) {
+        setPayouts(prev => prev.map(p => p.id === id ? { ...p, status: action === 'approve' ? 'APPROVED' : action === 'reject' ? 'REJECTED' : 'COMPLETED', rejectionReason: reason } : p))
+      }
+    } catch (e) {}
+  }
+
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold flex items-center gap-3"><DollarSign className="w-6 h-6 text-primary-400" /> Payout Requests</h2>
+        <select value={filter} onChange={e => { setFilter(e.target.value); setLoading(true) }} className="bg-gray-800 border border-gray-600 rounded-xl px-3 py-2 text-sm text-white outline-none">
+          <option value="">All</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+      <div className="space-y-3">
+        {payouts.length === 0 ? (
+          <div className="bg-gray-800/50 rounded-2xl p-12 text-center">
+            <DollarSign className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Payouts</h3>
+            <p className="text-sm text-gray-400">No payout requests found.</p>
+          </div>
+        ) : payouts.map(p => (
+          <div key={p.id} className="bg-gray-800/50 rounded-2xl p-5 border border-gray-700">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="font-bold text-lg">৳{p.amount.toLocaleString()}</span>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                    p.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
+                    p.status === 'APPROVED' ? 'bg-blue-500/20 text-blue-400' :
+                    p.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>{p.status}</span>
+                </div>
+                <p className="text-sm text-gray-300">{p.vendor?.user?.firstName} {p.vendor?.user?.lastName} <span className="text-gray-500">({p.vendor?.businessName})</span></p>
+                <p className="text-xs text-gray-400 mt-1">{p.paymentMethod} | Fee: ৳{p.fee.toLocaleString()} | Net: ৳{p.netAmount.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">{new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString()}</p>
+                {p.rejectionReason && <p className="text-xs text-red-400 mt-1">Rejected: {p.rejectionReason}</p>}
+              </div>
+              {p.status === 'PENDING' && (
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => handleAction(p.id, 'approve')} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-xs font-semibold rounded-lg transition-colors">Approve</button>
+                  <button onClick={() => handleAction(p.id, 'reject')} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-xs font-semibold rounded-lg transition-colors">Reject</button>
+                </div>
+              )}
+              {p.status === 'APPROVED' && (
+                <button onClick={() => handleAction(p.id, 'complete')} className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-xs font-semibold rounded-lg transition-colors shrink-0">Mark Paid</button>
+              )}
+              {p.status === 'COMPLETED' && <span className="text-xs text-green-400 italic shrink-0">Paid</span>}
+              {p.status === 'REJECTED' && <span className="text-xs text-red-400 italic shrink-0">Rejected</span>}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

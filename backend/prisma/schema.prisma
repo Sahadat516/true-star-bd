@@ -91,6 +91,14 @@ enum SettlementStatus {
   FAILED
 }
 
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
@@ -172,6 +180,7 @@ model Vendor {
   user            User        @relation(fields: [userId], references: [id])
   products        Product[]
   settlements     Settlement[]
+  payoutRequests  PayoutRequest[]
   reviews         Review[]
 }
 
@@ -359,6 +368,28 @@ model Settlement {
   updatedAt       DateTime  @updatedAt
 
   vendor          Vendor    @relation(fields: [vendorId], references: [id])
+}
+
+model PayoutRequest {
+  id              String        @id @default(uuid())
+  vendorId        String
+  amount          Float
+  fee             Float         @default(0)
+  netAmount       Float
+  status          PayoutStatus  @default(PENDING)
+  paymentMethod   String        // bKash, Nagad, Bank, Rocket, etc.
+  accountDetails  String?       // JSON: account number, bank name, routing no, etc.
+  notes           String?
+  rejectionReason String?
+  processedBy     String?
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  vendor          Vendor        @relation(fields: [vendorId], references: [id])
+
+  @@index([vendorId])
+  @@index([status])
 }
 
 model Review {
