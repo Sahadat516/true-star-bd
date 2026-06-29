@@ -50,6 +50,11 @@ function ProductDetailContent({ params }) {
     setTimeout(() => router.push('/checkout'), 100)
   }
 
+  const RANK_COLORS = {
+    NORMAL: 'text-gray-500', COMMON: 'text-green-500', UNCOMMON: 'text-blue-500',
+    RARE: 'text-purple-500', EPIC: 'text-orange-500', LEGENDARY: 'text-yellow-500',
+  }
+
   const t = (key) => {
     const d = {
       en: {
@@ -286,36 +291,52 @@ function ProductDetailContent({ params }) {
             {product.vendor && (
               <div className="bg-white dark:bg-[#131316] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Sold by</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Sold by</p>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm relative">
                       {product.vendor.logo ? <img src={product.vendor.logo} className="w-full h-full object-contain rounded-2xl" /> : product.vendor.businessName?.[0] || 'V'}
+                      {product.vendor.sellerStatus === 'ONLINE' && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#131316] rounded-full" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Link href={`/vendor/${product.vendor.id}`} className="font-bold text-sm hover:text-primary-600 transition-colors truncate block">{product.vendor.businessName || 'TRUE STAR BD'}</Link>
+                      <div className="flex items-center gap-1.5">
+                        <Link href={`/vendor/${product.vendor.id}`} className="font-bold text-sm hover:text-primary-600 transition-colors truncate block">{product.vendor.businessName || 'TRUE STAR BD'}</Link>
+                        {product.vendor.isFeatured && <BadgeCheck className="w-4 h-4 text-primary-500 shrink-0" />}
+                      </div>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                         <span className="flex items-center gap-0.5"><Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /> {product.vendor.rating || '5.0'}</span>
                         <span>·</span>
-                        <span>{product.vendor.totalSales || 0} orders</span>
+                        <span>{product.vendor.totalOrders || 0} orders</span>
+                        <span>·</span>
+                        <span className={`inline-flex items-center gap-0.5 font-medium ${
+                          product.vendor.sellerStatus === 'ONLINE' ? 'text-green-600' : 'text-gray-400'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${product.vendor.sellerStatus === 'ONLINE' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                          {product.vendor.sellerStatus === 'ONLINE' ? 'Online' : 'Offline'}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  {/* Seller Stats */}
-                  <div className="grid grid-cols-3 gap-2 mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                  <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                     <div className="text-center">
-                      <div className="text-xs font-bold text-green-600">98%</div>
+                      <div className={`text-xs font-bold ${(product.vendor.completionRate || 98) >= 95 ? 'text-green-600' : (product.vendor.completionRate || 98) >= 85 ? 'text-yellow-600' : 'text-red-600'}`}>
+                        {product.vendor.completionRate || 98}%
+                      </div>
                       <div className="text-[9px] text-gray-400">Completion</div>
                     </div>
                     <div className="text-center border-x border-gray-200 dark:border-gray-700">
-                      <div className="text-xs font-bold">Level 2</div>
-                      <div className="text-[9px] text-gray-400">Seller Rank</div>
+                      <div className={`text-xs font-bold ${RANK_COLORS[product.vendor.rank] || 'text-gray-600'}`}>
+                        {product.vendor.rank || 'NORMAL'}
+                      </div>
+                      <div className="text-[9px] text-gray-400">Rank</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs font-bold text-primary-600">&lt;5min</div>
+                      <div className="text-xs font-bold text-primary-600">{product.vendor.responseTime || '<5min'}</div>
                       <div className="text-[9px] text-gray-400">Response</div>
                     </div>
                   </div>
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3">
                     <Link href={`/vendor/${product.vendor.id}`}
                       className="flex items-center justify-center gap-2 w-full text-xs font-semibold text-primary-600 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 py-2.5 rounded-xl transition-colors">
                       <Store className="w-3.5 h-3.5" /> {t('viewStore')}
@@ -414,28 +435,62 @@ function ProductDetailContent({ params }) {
               </div>
             )}
             {activeTab === 'seller' && product.vendor && (
-              <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-gray-50 dark:bg-gray-800/30 rounded-2xl">
-                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-lg">
-                  {product.vendor.logo ? <img src={product.vendor.logo} className="w-full h-full object-contain rounded-2xl" /> : <Store className="w-10 h-10" />}
-                </div>
-                <div className="flex-1">
-                  <Link href={`/vendor/${product.vendor.id}`} className="font-bold text-xl hover:text-primary-600 transition-colors">{product.vendor.businessName || 'TRUE STAR BD'}</Link>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-2">
-                    <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /> {product.vendor.rating || '5.0'} Rating</span>
-                    <span>·</span>
-                    <span>{product.vendor.totalSales || 0} orders completed</span>
-                    {product.vendor.isFeatured && (
-                      <span className="flex items-center gap-1 text-primary-600 font-semibold"><BadgeCheck className="w-4 h-4" /> Featured Vendor</span>
+              <div>
+                <div className="flex flex-col sm:flex-row items-start gap-6 p-6 bg-gray-50 dark:bg-gray-800/30 rounded-2xl mb-6">
+                  <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-lg relative">
+                    {product.vendor.logo ? <img src={product.vendor.logo} className="w-full h-full object-contain rounded-2xl" /> : <Store className="w-10 h-10" />}
+                    {product.vendor.sellerStatus === 'ONLINE' && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 mt-3">{product.vendor.description || 'Professional digital seller on TRUE STAR BD marketplace.'}</p>
-                  <div className="flex gap-3 mt-4">
-                    <Link href={`/vendor/${product.vendor.id}`} className="btn-primary text-xs py-2.5 px-5">
-                      <Store className="w-3.5 h-3.5" /> View All Products
-                    </Link>
-                    <button className="btn-secondary text-xs py-2.5 px-5">
-                      <MessageCircle className="w-3.5 h-3.5" /> Contact Seller
-                    </button>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Link href={`/vendor/${product.vendor.id}`} className="font-bold text-xl hover:text-primary-600 transition-colors">{product.vendor.businessName || 'TRUE STAR BD'}</Link>
+                      {product.vendor.isFeatured && <BadgeCheck className="w-5 h-5 text-primary-500" />}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mt-2">
+                      <span className="flex items-center gap-1"><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /> {product.vendor.rating || '5.0'} ({product.vendor.reviewCount || 0})</span>
+                      <span>·</span>
+                      <span className={`inline-flex items-center gap-1 ${product.vendor.sellerStatus === 'ONLINE' ? 'text-green-600' : 'text-gray-400'}`}>
+                        <span className={`w-2 h-2 rounded-full ${product.vendor.sellerStatus === 'ONLINE' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        {product.vendor.sellerStatus === 'ONLINE' ? 'Online' : 'Offline'}
+                      </span>
+                      <span>·</span>
+                      <span>{product.vendor.totalOrders || 0} orders</span>
+                    </div>
+                    {/* Seller Stats Grid */}
+                    <div className="grid grid-cols-4 gap-3 mt-4">
+                      <div className="text-center p-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className={`text-sm font-bold ${RANK_COLORS[product.vendor.rank] || 'text-gray-600'}`}>{product.vendor.rank || 'NORMAL'}</div>
+                        <div className="text-[10px] text-gray-400">Rank</div>
+                      </div>
+                      <div className="text-center p-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="text-sm font-bold text-green-600">{product.vendor.completionRate || 98}%</div>
+                        <div className="text-[10px] text-gray-400">Completion</div>
+                      </div>
+                      <div className="text-center p-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="text-sm font-bold text-primary-600">{product.vendor.responseTime || '<5min'}</div>
+                        <div className="text-[10px] text-gray-400">Response</div>
+                      </div>
+                      <div className="text-center p-3 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <div className="text-sm font-bold">{product.vendor.totalSales || 0}</div>
+                        <div className="text-[10px] text-gray-400">Sales</div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-4">{product.vendor.description || 'Professional digital seller on TRUE STAR BD marketplace.'}</p>
+                    {product.vendor.insuranceEnabled && (
+                      <div className="flex items-center gap-2 mt-3 text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg">
+                        <Shield className="w-3.5 h-3.5" /> Seller offers purchase insurance — refund if account is compromised within insured period
+                      </div>
+                    )}
+                    <div className="flex gap-3 mt-4">
+                      <Link href={`/vendor/${product.vendor.id}`} className="btn-primary text-xs py-2.5 px-5">
+                        <Store className="w-3.5 h-3.5" /> View All Products
+                      </Link>
+                      <button className="btn-secondary text-xs py-2.5 px-5">
+                        <MessageCircle className="w-3.5 h-3.5" /> Contact Seller
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

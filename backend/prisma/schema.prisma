@@ -22,12 +22,30 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+enum SellerRank {
+  NORMAL
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum SellerStatus {
+  ONLINE
+  OFFLINE
+  AWAY
+  BUSY
+}
+
 enum OrderStatus {
-  PENDING
-  PROCESSING
+  UNPAID
+  PREPARING
+  DELIVERING
   COMPLETED
   CANCELLED
   REFUNDED
+  RESOLUTION
 }
 
 enum PaymentStatus {
@@ -105,8 +123,8 @@ model User {
 }
 
 model Vendor {
-  id              String    @id @default(uuid())
-  userId          String    @unique
+  id              String      @id @default(uuid())
+  userId          String      @unique
   businessName    String
   businessEmail   String?
   businessPhone   String?
@@ -117,17 +135,26 @@ model Vendor {
   description     String?
   logo            String?
   coverImage      String?
-  commission      Float     @default(10.0)
-  totalEarnings   Float     @default(0.0)
-  pendingBalance  Float     @default(0.0)
-  totalSales      Int       @default(0)
-  rating          Float     @default(0.0)
-  isApproved      Boolean   @default(false)
-  isFeatured      Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  commission      Float       @default(10.0)
+  totalEarnings   Float       @default(0.0)
+  pendingBalance  Float       @default(0.0)
+  totalSales      Int         @default(0)
+  totalOrders     Int         @default(0)
+  completionRate  Float       @default(100.0)
+  responseTime    String      @default("<5min")
+  rating          Float       @default(0.0)
+  reviewCount     Int         @default(0)
+  rank            SellerRank  @default(NORMAL)
+  rankUpdatedAt   DateTime?
+  sellerStatus    SellerStatus @default(OFFLINE)
+  lastSeen        DateTime?
+  insuranceEnabled Boolean   @default(false)
+  isApproved      Boolean     @default(false)
+  isFeatured      Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  user            User      @relation(fields: [userId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
   products        Product[]
   settlements     Settlement[]
   reviews         Review[]
@@ -214,7 +241,7 @@ model Order {
   serviceCharge   Float     @default(0)
   total           Float
   currency        String    @default("BDT")
-  status          OrderStatus @default(PENDING)
+  status          OrderStatus @default(UNPAID)
   paymentStatus   PaymentStatus @default(PENDING)
   paymentGateway  PaymentGateway?
   transactionId   String?
