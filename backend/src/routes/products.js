@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
         take: parseInt(limit),
         include: {
           category: true,
-          vendor: { select: { businessName: true, rating: true } },
+          vendor: { select: { id: true, businessName: true, rating: true, rank: true, sellerStatus: true, logo: true, completionRate: true, responseTime: true, totalOrders: true, reviewCount: true, isFeatured: true } },
           variants: { where: { isActive: true } },
           reviews: { select: { rating: true } },
           _count: { select: { reviews: true, orderItems: true } },
@@ -60,7 +60,7 @@ router.get('/:slug', async (req, res) => {
       where: { slug: req.params.slug },
       include: {
         category: true,
-        vendor: { select: { id: true, businessName: true, logo: true, rating: true, totalSales: true, isFeatured: true } },
+        vendor: { select: { id: true, businessName: true, logo: true, rating: true, totalSales: true, totalOrders: true, isFeatured: true, rank: true, sellerStatus: true, completionRate: true, responseTime: true, reviewCount: true, insuranceEnabled: true, description: true } },
         variants: { where: { isActive: true } },
         reviews: {
           include: { user: { select: { firstName: true, lastName: true, avatar: true } } },
