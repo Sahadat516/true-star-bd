@@ -111,6 +111,11 @@ function VendorContent({ params }) {
                   </span>
                 </div>
                 {store.description && <p className="mt-4 text-sm text-white/80 max-w-2xl">{store.description}</p>}
+                <div className="flex gap-3 mt-5">
+                  <Link href="/chat" className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-sm font-semibold rounded-xl transition-all">
+                    <MessageCircle className="w-4 h-4" /> Contact Seller
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useApp } from './AppContext'
-import { ShoppingCart, User, Menu, X, ChevronDown, Search, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Bell, TrendingUp, Grid3X3, Sparkles } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, ChevronDown, Search, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Bell, TrendingUp, Grid3X3, Sparkles, MessageCircle } from 'lucide-react'
 
 export default function Header() {
   const { user, vendor, cart, cartCount, theme, language, toggleTheme, changeLanguage, logout } = useApp()
@@ -44,8 +44,8 @@ export default function Header() {
 
   const t = (key) => {
     const translations = {
-      en: { search: 'Search products...', cart: 'Cart', signIn: 'Sign In', signUp: 'Sign Up', myAccount: 'My Account', dashboard: 'Dashboard', myOrders: 'My Orders', becomeVendor: 'Sell on TSBD', support: 'Support', allCat: 'All Categories', trending: 'Trending', topUp: 'Top Up', bestSellers: 'Best Sellers', newArrivals: 'New Arrivals' },
-      bn: { search: 'পণ্য অনুসন্ধান...', cart: 'কার্ট', signIn: 'সাইন ইন', signUp: 'নিবন্ধন', myAccount: 'আমার অ্যাকাউন্ট', dashboard: 'ড্যাশবোর্ড', myOrders: 'আমার অর্ডার', becomeVendor: 'TSBD-তে বিক্রি করুন', support: 'সাহায্য', allCat: 'সব ক্যাটাগরি', trending: 'ট্রেন্ডিং', topUp: 'টপ আপ', bestSellers: 'বেস্ট সেলার', newArrivals: 'নতুন' },
+      en: { search: 'Search products...', cart: 'Cart', signIn: 'Sign In', signUp: 'Sign Up', myAccount: 'My Account', dashboard: 'Dashboard', myOrders: 'My Orders', chat: 'Chat', becomeVendor: 'Sell on TSBD', support: 'Support', allCat: 'All Categories', trending: 'Trending', topUp: 'Top Up', bestSellers: 'Best Sellers', newArrivals: 'New Arrivals' },
+      bn: { search: 'পণ্য অনুসন্ধান...', cart: 'কার্ট', signIn: 'সাইন ইন', signUp: 'নিবন্ধন', myAccount: 'আমার অ্যাকাউন্ট', dashboard: 'ড্যাশবোর্ড', myOrders: 'আমার অর্ডার', chat: 'চ্যাট', becomeVendor: 'TSBD-তে বিক্রি করুন', support: 'সাহায্য', allCat: 'সব ক্যাটাগরি', trending: 'ট্রেন্ডিং', topUp: 'টপ আপ', bestSellers: 'বেস্ট সেলার', newArrivals: 'নতুন' },
     }
     return translations[language]?.[key] || translations.en[key] || key
   }
@@ -217,6 +217,9 @@ export default function Header() {
                       </Link>
                       <Link href="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                         <Package className="w-4 h-4 text-gray-400" /> {t('myOrders')}
+                      </Link>
+                      <Link href="/chat" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <MessageCircle className="w-4 h-4 text-gray-400" /> {t('chat')}
                       </Link>
                       {user.role === 'VENDOR' && vendor && (
                         <Link href="/vendor/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
@@ -393,6 +396,9 @@ export default function Header() {
                 </Link>
                 <Link href="/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm">
                   <Package className="w-4 h-4 text-gray-400" /> {t('myOrders')}
+                </Link>
+                <Link href="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm">
+                  <MessageCircle className="w-4 h-4 text-gray-400" /> {t('chat')}
                 </Link>
                 {['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role) && (
                   <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm">
