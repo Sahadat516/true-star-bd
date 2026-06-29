@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { AppProvider, useApp } from '../../components/AppContext'
+import { useApp } from '../../components/AppContext'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { User, Store, Shield, Eye, EyeOff, Mail, Lock, Phone, MapPin, Calendar, FileText, Briefcase, Building2, Upload } from 'lucide-react'
@@ -240,5 +240,5 @@ function SignUpContent() {
 }
 
 export default function SignUp() {
-  return <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}><AppProvider><SignUpContent /></AppProvider></Suspense>
+  return <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}><SignUpContent /></Suspense>
 }

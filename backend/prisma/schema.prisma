@@ -99,6 +99,9 @@ model User {
   notifications   Notification[]
   supportTickets  SupportTicket[]
   fraudLogs       FraudLog[]
+  fraudAlerts     FraudAlert[]
+  socialAccounts  SocialAccount[]
+  sessions        UserSession[]
 }
 
 model Vendor {
@@ -178,6 +181,12 @@ model Product {
   variants        ProductVariant[]
   orderItems      OrderItem[]
   reviews         Review[]
+
+  @@index([vendorId])
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive, isApproved])
+  @@index([createdAt])
 }
 
 model ProductVariant {
@@ -220,6 +229,12 @@ model Order {
   user            User      @relation(fields: [userId], references: [id])
   items           OrderItem[]
   payment         Payment?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([paymentStatus])
+  @@index([orderNumber])
 }
 
 model OrderItem {
@@ -237,6 +252,9 @@ model OrderItem {
   order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product         Product   @relation(fields: [productId], references: [id])
   variant         ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Payment {
@@ -390,4 +408,70 @@ model ActivityLog {
   ipAddress       String?
   metadata        Json?
   createdAt       DateTime  @default(now())
+}
+
+model SocialAccount {
+  id        String   @id @default(uuid())
+  userId    String
+  provider  String   // google, facebook, twitter
+  providerId String
+  email     String?
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerId])
+  @@index([userId])
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String?
+  ip        String?
+  userAgent String?
+  device    String?
+  browser   String?
+  os        String?
+  location  String?
+  isActive  Boolean  @default(true)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([token])
+}
+
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String
+  success   Boolean
+  ip        String?
+  userAgent String?
+  device    String?
+  browser   String?
+  os        String?
+  location  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model FraudAlert {
+  id         String    @id @default(uuid())
+  userId     String
+  type       String
+  details    String
+  risk       String    @default("medium")
+  status     String    @default("WARNING")
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id])
 }

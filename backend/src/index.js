@@ -4,7 +4,8 @@ const helmet = require('helmet');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 const httpServer = createServer(app);
@@ -38,6 +39,9 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/cms', require('./routes/cms'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/fraud', require('./routes/fraud'));
+app.use('/api/admin', require('./routes/adminDevices'));
+app.use('/api/admin', require('./routes/adminMonitor'));
 app.use('/uploads', express.static('public/uploads'));
 
 // Health check

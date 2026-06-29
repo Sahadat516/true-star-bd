@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AppProvider, useApp } from '../../../components/AppContext'
+import { useApp } from '../../../components/AppContext'
 import Header from '../../../components/Header'
 import Footer from '../../../components/Footer'
 import { LayoutDashboard, Package, ShoppingBag, DollarSign, TrendingUp, Settings, LogOut, Plus, Menu, X, Bell, Star, Wallet } from 'lucide-react'
@@ -426,5 +426,5 @@ function VendorSettings({ vendor }) {
 }
 
 export default function VendorDashboard() {
-  return <AppProvider><VendorDashboardContent /></AppProvider>
+  return <VendorDashboardContent />
 }

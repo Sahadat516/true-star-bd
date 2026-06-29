@@ -15,8 +15,23 @@ export function AppProvider({ children }) {
   const [cart, setCart] = useState([])
   const [theme, setTheme] = useState('light')
   const [language, setLanguage] = useState('en')
+  const [siteColors, setSiteColors] = useState({ primary: '#25D366', accent: '#075E54' })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+  const applySiteColors = (colors) => {
+    const root = document.documentElement
+    if (colors.primary) {
+      root.style.setProperty('--primary', colors.primary)
+      root.style.setProperty('--primary-dark', colors.primaryDark || '#1fa855')
+      root.style.setProperty('--primary-light', colors.primaryLight || '#dcfce7')
+    }
+    if (colors.accent) {
+      root.style.setProperty('--accent', colors.accent)
+      root.style.setProperty('--accent-light', colors.accentLight || '#ccfbf1')
+    }
+    setSiteColors(colors)
+  }
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light'
@@ -33,6 +48,19 @@ export function AppProvider({ children }) {
 
     // Detect language from browser
     detectUserLanguage()
+
+    // Load site colors
+    fetch('/api/cms/settings')
+      .then(r => r.json())
+      .then(d => {
+        const s = d.settings || d || {}
+        const colors = {
+          primary: s.primary_color || '#25D366',
+          accent: s.accent_color || '#075E54',
+        }
+        applySiteColors(colors)
+      })
+      .catch(() => {})
 
     // Load user if token exists
     if (token) {
@@ -140,9 +168,9 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      user, vendor, cart, theme, language, loading,
+      user, vendor, cart, theme, language, loading, siteColors,
       setUser, addToCart, removeFromCart, clearCart,
-      cartTotal, cartCount, toggleTheme, changeLanguage, login, logout
+      cartTotal, cartCount, toggleTheme, changeLanguage, login, logout, applySiteColors
     }}>
       {children}
     </AppContext.Provider>

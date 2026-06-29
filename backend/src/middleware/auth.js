@@ -51,4 +51,19 @@ const vendorAuth = async (req, res, next) => {
   });
 };
 
-module.exports = { auth, adminAuth, staffAuth, vendorAuth };
+const optionalAuth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'truestarbd-super-secret-key-2026');
+      const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+      if (user && user.status === 'ACTIVE') {
+        req.user = user;
+        req.token = token;
+      }
+    }
+  } catch (e) { /* silent - optional auth */ }
+  next();
+};
+
+module.exports = { auth, adminAuth, staffAuth, vendorAuth, optionalAuth };

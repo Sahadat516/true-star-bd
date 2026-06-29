@@ -1,36 +1,100 @@
 'use client'
 
-export const gatewayLogos = {
-  stripe: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#635BFF"/><path d="M20 8.5h-3.5v11H20c3.5 0 5.8-2.2 5.8-5.5S23.5 8.5 20 8.5zm0 9.2h-1.8v-7.4H20c2.2 0 3.8 1.4 3.8 3.7s-1.6 3.7-3.8 3.7zm-8.5-3.5c-.4 0-.7-.3-.7-.7s.3-.7.7-.7h.2l.7.1.4-.2.2-.4V7l-.2-.4-.4-.2-.7-.1c-1.8 0-3.2 1.2-3.2 3s1.4 3 3.2 3c.4 0 .7.3.7.7s-.3.7-.7.7h-.2l-.7-.1-.4.2-.2.4v5l.2.4.4.2.7.1c1.8 0 3.2-1.2 3.2-3 0-1.7-1.4-3-3.2-3z" fill="#fff"/></svg>,
+import { useState } from 'react'
 
-  paypal: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#003087"/><path d="M15.5 7h-4c-.3 0-.6.3-.7.6l-2 12.5c0 .3.2.6.5.6h2.2c.3 0 .6-.3.7-.6l.5-3.5c0-.3.3-.6.7-.6h1.5c3.2 0 5-2 5.5-5 .2-1.5-.4-4-3.5-4zm.7 5.5c-.3 1.5-1.8 2.5-3.5 2.5h-1l.7-4.5c0-.2.2-.3.4-.3h.5c1.2 0 2 .5 2.2 1.5.1.3 0 .6.1.8z" fill="#fff"/><path d="M22.5 7h-4c-.3 0-.6.3-.7.6l-2 12.5c0 .3.2.6.5.6h2.2c.3 0 .6-.3.7-.6l.5-3.5c0-.3.3-.6.7-.6h1.5c3.2 0 5-2 5.5-5 .2-1.5-.4-4-3.5-4zm.7 5.5c-.3 1.5-1.8 2.5-3.5 2.5h-1l.7-4.5c0-.2.2-.3.4-.3h.5c1.2 0 2 .5 2.2 1.5.1.3 0 .6.1.8z" fill="#009CDE"/></svg>,
-
-  bkash: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#E2136E"/><path d="M20 4c-5.5 0-10 4-10 10s4.5 10 10 10 10-4 10-10-4.5-10-10-10zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm-3-11v6c0 .6.4 1 1 1s1-.4 1-1v-6c0-.6-.4-1-1-1s-1 .4-1 1zm4 0v6c0 .6.4 1 1 1s1-.4 1-1v-6c0-.6-.4-1-1-1s-1 .4-1 1z" fill="#fff"/></svg>,
-
-  nagad: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#F5842D"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="12">Nagad</text></svg>,
-
-  rocket: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#1A5276"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="12">Rocket</text></svg>,
-
-  sslcommerz: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#28A745"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="8">SSLCommerz</text></svg>,
-
-  bybit: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#1E3A5F"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="12">Bybit</text></svg>,
-
-  binance: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#F0B90B"/><text x="20" y="19" textAnchor="middle" fill="#1E1E1E" fontFamily="Arial" fontWeight="bold" fontSize="9">Binance</text></svg>,
-
-  aamarpay: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#E74C3C"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="8">Aamarpay</text></svg>,
-
-  portwallet: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#2E86C1"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="8">PortWallet</text></svg>,
-
-  bank_transfer: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#555"/><path d="M20 6l-8 6h4v6h8v-6h4l-8-6zm-2 8h4v2h-4v-2z" fill="#fff"/></svg>,
-
-  usdt: <svg viewBox="0 0 40 28" className="w-8 h-6"><rect width="40" height="28" rx="4" fill="#26A17B"/><text x="20" y="19" textAnchor="middle" fill="#fff" fontFamily="Arial" fontWeight="bold" fontSize="8">USDT</text></svg>,
+const LOGO_SOURCES = {
+  stripe: [
+    'https://logo.clearbit.com/stripe.com',
+    'https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg',
+  ],
+  paypal: [
+    'https://logo.clearbit.com/paypal.com',
+    'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg',
+  ],
+  bkash: [
+    'https://logo.clearbit.com/bkash.com',
+    'https://upload.wikimedia.org/wikipedia/commons/4/41/bKash_logo.svg',
+  ],
+  nagad: [
+    'https://logo.clearbit.com/nagad.com.bd',
+    'https://upload.wikimedia.org/wikipedia/commons/f/f8/Nagad_Logo.svg',
+  ],
+  rocket: [
+    'https://logo.clearbit.com/dutchbanglabank.com',
+  ],
+  sslcommerz: [
+    'https://logo.clearbit.com/sslcommerz.com',
+  ],
+  bybit: [
+    'https://logo.clearbit.com/bybit.com',
+    'https://upload.wikimedia.org/wikipedia/commons/1/1b/Bybit_Logo.svg',
+  ],
+  binance: [
+    'https://logo.clearbit.com/binance.com',
+    'https://upload.wikimedia.org/wikipedia/commons/1/15/Binance_logo.svg',
+  ],
+  aamarpay: [
+    'https://logo.clearbit.com/aamarpay.com',
+  ],
+  portwallet: [
+    'https://logo.clearbit.com/portwallet.com',
+  ],
+  usdt: [
+    'https://logo.clearbit.com/tether.to',
+    'https://upload.wikimedia.org/wikipedia/commons/4/4a/Tether_Logo.svg',
+  ],
 }
 
-export default function GatewayIcon({ id, name, type }) {
+function FallbackLogo({ id }) {
+  const s = {
+    stripe: { bg: '#635BFF', text: 'stripe' },
+    paypal: { bg: '#003087', text: 'PayPal' },
+    bkash: { bg: '#E2136E', text: 'bKash' },
+    nagad: { bg: '#F5842D', text: 'Nagad' },
+    rocket: { bg: '#1A5276', text: 'Rocket' },
+    sslcommerz: { bg: '#28A745', text: 'SSL' },
+    bybit: { bg: '#1E3A5F', text: 'Bybit' },
+    binance: { bg: '#F0B90B', text: 'Binance', dark: true },
+    aamarpay: { bg: '#E74C3C', text: 'Aamarpay' },
+    portwallet: { bg: '#2E86C1', text: 'Port' },
+    bank_transfer: { bg: '#555', text: 'Bank' },
+    usdt: { bg: '#26A17B', text: 'USDT' },
+  }[id] || { bg: '#999', text: '?' }
   return (
-    <div className="flex items-center gap-2">
-      {gatewayLogos[id] || <div className="w-8 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-[8px] font-bold text-gray-500">?</div>}
-      <span className="text-sm font-medium">{name}</span>
+    <svg viewBox="0 0 40 28" className="w-8 h-6 shrink-0">
+      <rect width="40" height="28" rx="4" fill={s.bg} />
+      <text x="20" y="18" textAnchor="middle" fill={s.dark ? '#1E1E1E' : '#fff'} fontFamily="Arial" fontWeight="bold" fontSize={10}>{s.text}</text>
+    </svg>
+  )
+}
+
+export function GatewayImage({ id, name, className = '' }) {
+  const [failedCount, setFailedCount] = useState(0)
+  const sources = LOGO_SOURCES[id?.toLowerCase()] || []
+
+  if (failedCount >= sources.length) {
+    return <div className={`w-8 h-6 bg-gray-100 dark:bg-gray-600 rounded flex items-center justify-center text-[8px] text-gray-400 font-medium ${className}`}>{name?.[0] || '?'}</div>
+  }
+
+  if (sources.length === 0) {
+    return <div className={`w-8 h-6 bg-gray-100 dark:bg-gray-600 rounded flex items-center justify-center text-[8px] text-gray-400 font-medium ${className}`}>{name?.[0] || '?'}</div>
+  }
+
+  return (
+    <img
+      src={sources[failedCount]}
+      alt={name}
+      className={`w-full h-full object-contain ${className}`}
+      onError={() => setFailedCount(c => c + 1)}
+    />
+  )
+}
+
+export default function GatewayIcon({ id, name, iconOnly = false }) {
+  return (
+    <div className={`flex items-center ${iconOnly ? '' : 'gap-2'}`}>
+      <GatewayImage id={id} name={name} />
+      {!iconOnly && <span className="text-sm font-medium">{name}</span>}
     </div>
   )
 }

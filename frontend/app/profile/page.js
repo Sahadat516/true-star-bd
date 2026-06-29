@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AppProvider, useApp } from '../../components/AppContext'
+import { useApp } from '../../components/AppContext'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { User, Mail, Phone, MapPin, Calendar, Shield, Save, Camera } from 'lucide-react'
@@ -70,5 +70,5 @@ function ProfileContent() {
 }
 
 export default function Profile() {
-  return <AppProvider><ProfileContent /></AppProvider>
+  return <ProfileContent />
 }

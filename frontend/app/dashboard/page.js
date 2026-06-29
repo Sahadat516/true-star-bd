@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AppProvider, useApp } from '../../components/AppContext'
+import { useApp } from '../../components/AppContext'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { LayoutDashboard, ShoppingBag, Download, User, HeadphonesIcon, Package, Clock, CheckCircle, XCircle, ChevronRight, Menu, X, Star, Wallet, Shield, Mail, Phone, MapPin, Save, Camera, MessageSquare } from 'lucide-react'
@@ -334,5 +334,5 @@ function SupportTab({ tickets }) {
 }
 
 export default function Dashboard() {
-  return <AppProvider><DashboardContent /></AppProvider>
+  return <DashboardContent />
 }

@@ -59,7 +59,7 @@ export default function ChatWidget() {
 
   const getFallbackResponse = (msg, lang) => {
     const lower = msg.toLowerCase()
-    if (lower.includes('price') || lower.includes('price') || lower.includes('দাম')) {
+    if (lower.includes('price') || lower.includes('pricing') || lower.includes('দাম')) {
       return lang === 'bn' ? 'আমাদের সব পণ্যের দাম পণ্য পৃষ্ঠায় দেখানো আছে। আপনি কোন পণ্য সম্পর্কে জানতে চান?' : 'All product prices are listed on the product page. Which product are you interested in?'
     }
     if (lower.includes('order') || lower.includes('অর্ডার')) {

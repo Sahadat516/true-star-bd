@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const { adminAuth } = require('../middleware/auth');
+const { auth, adminAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -23,7 +23,7 @@ const upload = multer({
   },
 });
 
-router.post('/image', adminAuth, upload.single('image'), (req, res) => {
+router.post('/image', auth, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const url = `/uploads/${req.file.filename}`;
   res.json({ url, filename: req.file.filename });

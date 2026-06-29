@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AppProvider } from '../../components/AppContext'
+
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { Loader2 } from 'lucide-react'
@@ -13,10 +13,22 @@ function CMSPageContent({ slug, fallbackTitle }) {
   useEffect(() => {
     fetch(`/api/cms/pages/${slug}`)
       .then(r => r.json())
-      .then(d => { setPage(d.page) })
+      .then(d => {
+        setPage(d.page)
+        if (d.page?.metaTitle) document.title = d.page.metaTitle
+        else if (d.page?.title) document.title = `${d.page.title} | True Star BD`
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [slug])
+
+  useEffect(() => {
+    if (page?.metaDescription) {
+      let meta = document.querySelector('meta[name="description"]')
+      if (!meta) { meta = document.createElement('meta'); meta.name = 'description'; document.head.appendChild(meta) }
+      meta.content = page.metaDescription
+    }
+  }, [page])
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0f172a]">
@@ -45,9 +57,5 @@ function CMSPageContent({ slug, fallbackTitle }) {
 }
 
 export default function CMSPage({ params }) {
-  return (
-    <AppProvider>
-      <CMSPageContent slug={params.slug} />
-    </AppProvider>
-  )
+  return <CMSPageContent slug={params.slug} />
 }

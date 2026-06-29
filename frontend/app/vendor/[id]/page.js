@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AppProvider, useApp } from '../../../components/AppContext'
+import { useApp } from '../../../components/AppContext'
 import Header from '../../../components/Header'
 import Footer from '../../../components/Footer'
 import { Star, Shield, Award, Clock, ChevronRight, Loader2, Store, Package, ShoppingBag } from 'lucide-react'
@@ -64,7 +64,13 @@ function VendorContent({ params }) {
               {products.map(product => (
                 <div key={product.id} className="card-hover p-0 overflow-hidden">
                   <Link href={`/product/${product.slug}`}>
-                    <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center text-4xl">📦</div>
+                    <div className="h-40 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                      {product.image ? (
+                        <img src={product.image} alt={product.name} className="w-full h-full object-contain p-3" />
+                      ) : (
+                        <span className="text-4xl">📦</span>
+                      )}
+                    </div>
                   </Link>
                   <div className="p-4">
                     <p className="text-xs text-primary-600 font-medium">{product.category?.name}</p>
@@ -91,5 +97,5 @@ function VendorContent({ params }) {
 }
 
 export default function VendorPage({ params }) {
-  return <AppProvider><VendorContent params={params} /></AppProvider>
+  return <VendorContent params={params} />
 }

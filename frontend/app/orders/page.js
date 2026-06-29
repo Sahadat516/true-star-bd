@@ -1,6 +1,6 @@
 'use client'
 
-import { AppProvider } from '../../components/AppContext'
+
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 import { ShoppingBag, Search, CreditCard, Shield, Zap, Users, Award, HeadphonesIcon, Globe, MessageCircle, Send, Mail, Phone, MapPin, CheckCircle } from 'lucide-react'
@@ -25,5 +25,5 @@ function OrdersContent() {
 }
 
 export default function Orders() {
-  return <AppProvider><OrdersContent /></AppProvider>
+  return <OrdersContent />
 }

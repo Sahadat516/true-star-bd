@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AppProvider, useApp } from '../../components/AppContext'
+import { useApp } from '../../components/AppContext'
 import { LayoutDashboard, Users, ShoppingBag, Package, Settings, LogOut, TrendingUp, DollarSign, AlertTriangle, CheckCircle, XCircle, Menu, X, Bell, Store, FileText, Shield, Edit3, Globe, Save, Plus, Trash2, Eye, BookOpen, CreditCard, Smartphone } from 'lucide-react'
 
 function AdminContent() {
@@ -44,7 +44,10 @@ function AdminContent() {
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'pages', label: 'Page Editor', icon: Edit3 },
     { id: 'site-settings', label: 'Site Settings', icon: Globe },
-    { id: 'reports', label: 'Reports', icon: TrendingUp },
+    { id: 'device-access', label: 'Device Access', icon: Smartphone },
+    { id: 'fraud', label: 'Fraud Detection', icon: AlertTriangle },
+    { id: 'ai-monitor', label: 'AI Monitor', icon: TrendingUp },
+    { id: 'reports', label: 'Reports', icon: BookOpen },
     { id: 'settings', label: 'System', icon: Settings },
   ]
 
@@ -102,6 +105,9 @@ function AdminContent() {
           {activeTab === 'orders' && <OrdersPanel />}
           {activeTab === 'pages' && <PagesEditor />}
           {activeTab === 'site-settings' && <SiteSettingsEditor />}
+          {activeTab === 'device-access' && <DeviceAccessPanel />}
+          {activeTab === 'fraud' && <FraudPanel />}
+          {activeTab === 'ai-monitor' && <AIMonitorPanel />}
           {activeTab === 'reports' && <ReportsPanel />}
           {activeTab === 'settings' && <SettingsPanel />}
         </div>
@@ -546,7 +552,7 @@ function SiteSettingsEditor() {
     setSaving(false)
   }
 
-  const groupLabels = { company: 'Company Info', billing: 'Billing & VAT', payment: 'Payment Info', appearance: 'Branding & Appearance', general: 'General' }
+  const groupLabels = { company: 'Company Info', billing: 'Billing & VAT', payment: 'Payment Info', appearance: 'Branding & Appearance', general: 'General', colors: 'Theme Colors', seo: 'SEO & Analytics' }
 
   return (
     <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
@@ -604,6 +610,33 @@ function SiteSettingsEditor() {
         </div>
       </div>
 
+      {/* Theme Colors */}
+      <div className="mb-8 p-4 bg-gray-700/30 rounded-xl border border-gray-600">
+        <h4 className="text-md font-semibold mb-3 text-primary-400">Theme Colors</h4>
+        <p className="text-xs text-gray-500 mb-4">Customize your brand colors. Changes apply immediately after saving.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Primary Color</label>
+            <div className="flex items-center gap-3">
+              <input type="color" value={form.primary_color || '#25D366'} onChange={e => setForm(p => ({ ...p, primary_color: e.target.value }))} className="w-12 h-12 rounded-lg cursor-pointer border border-gray-600 bg-transparent" />
+              <span className="text-xs font-mono text-gray-400">{form.primary_color || '#25D366'}</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Accent Color</label>
+            <div className="flex items-center gap-3">
+              <input type="color" value={form.accent_color || '#075E54'} onChange={e => setForm(p => ({ ...p, accent_color: e.target.value }))} className="w-12 h-12 rounded-lg cursor-pointer border border-gray-600 bg-transparent" />
+              <span className="text-xs font-mono text-gray-400">{form.accent_color || '#075E54'}</span>
+            </div>
+          </div>
+          <div className="flex items-end">
+            <div className="w-full p-3 rounded-lg" style={{ background: `linear-gradient(135deg, ${form.primary_color || '#25D366'}, ${form.accent_color || '#075E54'})` }}>
+              <p className="text-xs text-white font-semibold text-center">Preview</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {Object.entries(groups).map(([group, items]) => (
         <div key={group} className="mb-8">
           <h4 className="text-md font-semibold mb-3 text-primary-400 border-b border-gray-700 pb-2">{groupLabels[group] || group}</h4>
@@ -648,6 +681,253 @@ function ReportsPanel() {
   )
 }
 
+function FraudPanel() {
+  const [alerts, setAlerts] = useState([])
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/fraud/alerts', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      fetch('/api/fraud/stats', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+    ]).then(([a, s]) => { setAlerts(a.alerts || []); setStats(s.stats); setLoading(false) }).catch(() => setLoading(false))
+  }, [])
+
+  const resolveAlert = async (id, status) => {
+    await fetch(`/api/fraud/alerts/${id}/resolve`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) })
+    setAlerts(prev => prev.map(a => a.id === id ? { ...a, status } : a))
+  }
+
+  if (loading) return <div className="text-center py-8 text-gray-400">Loading fraud data...</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <AlertTriangle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-red-400">{stats?.highRisk || 0}</p>
+          <p className="text-xs text-gray-400">High Risk</p>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <AlertTriangle className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-yellow-400">{stats?.lowRisk || 0}</p>
+          <p className="text-xs text-gray-400">Warnings</p>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-green-400">{stats?.totalAlerts || 0}</p>
+          <p className="text-xs text-gray-400">Total Alerts</p>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <Bell className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-blue-400">{stats?.recentAlerts || 0}</p>
+          <p className="text-xs text-gray-400">Last 24 Hours</p>
+        </div>
+      </div>
+
+      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4 text-primary-400" /> AI Fraud Detection Alerts</h3>
+          <span className="text-xs text-gray-400">AI-powered · Real-time monitoring</span>
+        </div>
+        {alerts.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <Shield className="w-12 h-12 mx-auto mb-3 text-green-500" />
+            <p>No fraud alerts detected. Your platform is secure.</p>
+            <p className="text-xs mt-2">The AI fraud detection system is monitoring all transactions 24/7.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-700/50">
+                <tr><th className="text-left p-3 text-gray-400 font-medium">Type</th><th className="text-left p-3 text-gray-400 font-medium">User</th><th className="text-left p-3 text-gray-400 font-medium">Details</th><th className="text-left p-3 text-gray-400 font-medium">Risk</th><th className="text-left p-3 text-gray-400 font-medium">Status</th><th className="text-left p-3 text-gray-400 font-medium">Action</th></tr>
+              </thead>
+              <tbody>
+                {alerts.map(alert => (
+                  <tr key={alert.id} className="border-t border-gray-700 hover:bg-gray-700/30">
+                    <td className="p-3"><span className="badge bg-gray-700 text-xs px-2 py-1 rounded">{alert.type}</span></td>
+                    <td className="p-3">{alert.user?.email || 'Unknown'}</td>
+                    <td className="p-3 text-gray-400 max-w-xs truncate">{alert.details}</td>
+                    <td className="p-3"><span className={`text-xs px-2 py-1 rounded ${alert.risk === 'high' ? 'bg-red-900/50 text-red-400' : 'bg-yellow-900/50 text-yellow-400'}`}>{alert.risk}</span></td>
+                    <td className="p-3"><span className={`text-xs px-2 py-1 rounded ${alert.status === 'FLAGGED' ? 'bg-red-900/50 text-red-400' : alert.status === 'WARNING' ? 'bg-yellow-900/50 text-yellow-400' : 'bg-green-900/50 text-green-400'}`}>{alert.status}</span></td>
+                    <td className="p-3">
+                      {alert.status !== 'RESOLVED' && (
+                        <div className="flex gap-1">
+                          <button onClick={() => resolveAlert(alert.id, 'RESOLVED')} className="text-xs px-2 py-1 bg-green-600/20 text-green-400 rounded hover:bg-green-600/40">Resolve</button>
+                          <button onClick={() => resolveAlert(alert.id, 'DISMISSED')} className="text-xs px-2 py-1 bg-gray-700 text-gray-400 rounded hover:bg-gray-600">Dismiss</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-gradient-to-r from-primary-900/50 to-accent-900/50 rounded-xl border border-primary-700/30 p-4">
+        <div className="flex items-center gap-3">
+          <Shield className="w-8 h-8 text-primary-400" />
+          <div>
+            <h4 className="font-semibold text-sm">AI Fraud Detection System</h4>
+            <p className="text-xs text-gray-400 mt-1">The system automatically monitors: suspicious logins, unusual order patterns, failed payment attempts, and rapid API calls. High-risk activities trigger automatic account suspension and admin notification. All data is processed locally — no third-party sharing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeviceAccessPanel() {
+  const [sessions, setSessions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filterEmail, setFilterEmail] = useState('')
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+
+  useEffect(() => {
+    const url = filterEmail ? `/api/admin/devices?email=${filterEmail}` : '/api/admin/devices'
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { setSessions(d.sessions || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [filterEmail])
+
+  const forceLogout = async (sessionId) => {
+    await fetch(`/api/admin/devices/${sessionId}/logout`, {
+      method: 'PATCH', headers: { Authorization: `Bearer ${token}` },
+    })
+    setSessions(prev => prev.filter(s => s.id !== sessionId))
+  }
+
+  if (loading) return <div className="text-center py-8 text-gray-400">Loading device data...</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <input value={filterEmail} onChange={e => setFilterEmail(e.target.value)} placeholder="Filter by email..." className="w-full max-w-xs px-3 py-2 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-primary-500 outline-none text-sm" />
+        {filterEmail && <button onClick={() => setFilterEmail('')} className="text-xs text-gray-400 hover:text-white">Clear</button>}
+      </div>
+      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          <h3 className="font-semibold flex items-center gap-2"><Smartphone className="w-4 h-4 text-primary-400" /> Active User Sessions</h3>
+          <span className="text-xs text-gray-400">{sessions.length} active sessions</span>
+        </div>
+        {sessions.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <Smartphone className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+            <p>No active sessions found.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-700/50">
+                <tr><th className="text-left p-3 text-gray-400 font-medium">User</th><th className="text-left p-3 text-gray-400 font-medium">Device</th><th className="text-left p-3 text-gray-400 font-medium">Browser</th><th className="text-left p-3 text-gray-400 font-medium">OS</th><th className="text-left p-3 text-gray-400 font-medium">Location</th><th className="text-left p-3 text-gray-400 font-medium">IP</th><th className="text-left p-3 text-gray-400 font-medium">Last Seen</th><th className="text-left p-3 text-gray-400 font-medium">Action</th></tr>
+              </thead>
+              <tbody>
+                {sessions.map(s => (
+                  <tr key={s.id} className="border-t border-gray-700 hover:bg-gray-700/30">
+                    <td className="p-3">{s.user?.email || 'Unknown'}</td>
+                    <td className="p-3"><span className="badge bg-gray-700 text-xs px-2 py-1 rounded">{s.device || 'Unknown'}</span></td>
+                    <td className="p-3 text-gray-300">{s.browser || '-'}</td>
+                    <td className="p-3 text-gray-300">{s.os || '-'}</td>
+                    <td className="p-3 text-gray-300">{s.location || '-'}</td>
+                    <td className="p-3 text-gray-400 text-xs font-mono">{s.ip || '-'}</td>
+                    <td className="p-3 text-xs text-gray-400">{s.lastSeen ? new Date(s.lastSeen).toLocaleString() : '-'}</td>
+                    <td className="p-3">
+                      <button onClick={() => forceLogout(s.id)} className="text-xs px-2 py-1 bg-red-600/20 text-red-400 rounded hover:bg-red-600/40">Force Logout</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      <div className="bg-gray-700/30 rounded-xl border border-gray-700 p-4">
+        <h4 className="font-semibold text-sm mb-2">Device Tracking System</h4>
+        <p className="text-xs text-gray-400">Every login attempt is logged with device fingerprint (device type, browser, OS, IP address, and geographic location). Active sessions can be monitored and terminated from this panel. Location data is approximate, based on IP address geolocation.</p>
+      </div>
+    </div>
+  )
+}
+
+function AIMonitorPanel() {
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+
+  useEffect(() => {
+    fetch('/api/admin/monitor', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { setMetrics(d); setLoading(false) })
+      .catch(() => setLoading(false))
+    const interval = setInterval(() => {
+      fetch('/api/admin/monitor', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json()).then(d => setMetrics(d)).catch(() => {})
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) return <div className="text-center py-8 text-gray-400">Loading AI monitor data...</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <p className="text-3xl font-bold text-primary-400">{metrics?.activeUsers || 0}</p>
+          <p className="text-xs text-gray-400 mt-1">Active Users (24h)</p>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <p className="text-3xl font-bold text-green-400">{metrics?.requestsPerMin || 0}</p>
+          <p className="text-xs text-gray-400 mt-1">Requests/Minute</p>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <p className="text-3xl font-bold text-yellow-400">{metrics?.errorRate || 0}%</p>
+          <p className="text-xs text-gray-400 mt-1">Error Rate</p>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 text-center">
+          <p className="text-3xl font-bold text-purple-400">{metrics?.avgResponseTime || 0}ms</p>
+          <p className="text-xs text-gray-400 mt-1">Avg Response Time</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
+          <h4 className="font-semibold text-sm mb-3">System Health</h4>
+          <div className="space-y-3">
+            <div><div className="flex justify-between text-xs mb-1"><span>CPU Usage</span><span>{metrics?.cpuUsage || 0}%</span></div><div className="w-full bg-gray-700 rounded-full h-2"><div className="bg-primary-500 h-2 rounded-full" style={{ width: `${Math.min(100, metrics?.cpuUsage || 0)}%` }} /></div></div>
+            <div><div className="flex justify-between text-xs mb-1"><span>Memory Usage</span><span>{metrics?.memoryUsage || 0}%</span></div><div className="w-full bg-gray-700 rounded-full h-2"><div className="bg-accent-500 h-2 rounded-full" style={{ width: `${Math.min(100, metrics?.memoryUsage || 0)}%` }} /></div></div>
+            <div><div className="flex justify-between text-xs mb-1"><span>Database Connections</span><span>{metrics?.dbConnections || 0}</span></div><div className="w-full bg-gray-700 rounded-full h-2"><div className="bg-green-500 h-2 rounded-full" style={{ width: `${Math.min(100, ((metrics?.dbConnections || 0) / 10) * 100)}%` }} /></div></div>
+          </div>
+        </div>
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
+          <h4 className="font-semibold text-sm mb-3">Auto-Management Actions</h4>
+          <div className="space-y-2">
+            {metrics?.recentActions?.length > 0 ? metrics.recentActions.map((action, i) => (
+              <div key={i} className="flex items-start gap-2 p-2 bg-gray-700/30 rounded-lg">
+                {action.type === 'auto_suspend' ? <Shield className="w-4 h-4 text-red-400 mt-0.5" /> : <CheckCircle className="w-4 h-4 text-green-400 mt-0.5" />}
+                <div><p className="text-xs">{action.description}</p><p className="text-[10px] text-gray-500">{new Date(action.timestamp).toLocaleString()}</p></div>
+              </div>
+            )) : <p className="text-xs text-gray-500 text-center py-4">No auto-management actions yet. The AI system is monitoring for anomalies.</p>}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-r from-primary-900/50 to-accent-900/50 rounded-xl border border-primary-700/30 p-4">
+        <div className="flex items-center gap-3">
+          <Shield className="w-8 h-8 text-primary-400" />
+          <div>
+            <h4 className="font-semibold text-sm">AI Monitoring System</h4>
+            <p className="text-xs text-gray-400 mt-1">Real-time monitoring covers: server health (CPU, memory, response time), user behavior analytics (active users, request patterns), anomaly detection (unusual traffic, error rate spikes), and automated content moderation. Dashboard auto-refreshes every 15 seconds. All data is processed locally on your server.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SettingsPanel() {
   return (
     <div className="grid md:grid-cols-2 gap-6">
@@ -677,5 +957,5 @@ function SettingsPanel() {
 }
 
 export default function Admin() {
-  return <AppProvider><AdminContent /></AppProvider>
+  return <AdminContent />
 }

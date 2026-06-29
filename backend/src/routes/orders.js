@@ -16,7 +16,7 @@ router.post('/', auth, async (req, res) => {
     for (const item of items) {
       const product = await prisma.product.findUnique({
         where: { id: item.productId },
-        include: { variants: true },
+        include: { variants: true, vendor: { select: { commission: true } } },
       });
       if (!product) return res.status(404).json({ error: `Product ${item.productId} not found` });
 
