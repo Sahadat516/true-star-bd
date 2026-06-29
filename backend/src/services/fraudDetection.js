@@ -64,7 +64,10 @@ async function flagUser(userId, type, details) {
   });
   await prisma.user.update({
     where: { id: userId },
-    data: { status: 'SUSPENDED', notes: `Auto-suspended: ${type} - ${details}` },
+    data: { status: 'SUSPENDED' },
+  });
+  await prisma.fraudLog.create({
+    data: { userId, action: type, reason: `Auto-suspended: ${type} - ${details}`, severity: 'high' },
   });
 }
 
