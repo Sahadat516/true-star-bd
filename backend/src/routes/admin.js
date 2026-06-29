@@ -154,4 +154,62 @@ router.get('/settings', adminAuth, async (req, res) => {
   });
 });
 
+// All orders (admin)
+router.get('/orders', adminAuth, async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const where = {};
+    if (status) where.status = status;
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where, skip: (page - 1) * limit, take: parseInt(limit),
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { firstName: true, email: true } }, items: true, disputes: { select: { id: true, status: true, reason: true } } },
+      }),
+      prisma.order.count({ where }),
+    ]);
+    res.json({ orders, total, pages: Math.ceil(total / limit) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// All disputes
+router.get('/disputes', adminAuth, async (req, res) => {
+  try {
+    const disputes = await prisma.dispute.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { order: { select: { orderNumber: true, total: true, status: true } } },
+    });
+    res.json({ disputes });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// AI monitor data
+router.get('/monitor', adminAuth, async (req, res) => {
+  try {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [todayOrders, weekOrders, todayUsers, fraudLogs, totalRevenue] = await Promise.all([
+      prisma.order.count({ where: { createdAt: { gte: today } } }),
+      prisma.order.count({ where: { createdAt: { gte: weekAgo } } }),
+      prisma.user.count({ where: { createdAt: { gte: today } } }),
+      prisma.fraudLog?.count ? prisma.fraudLog.count({ where: { createdAt: { gte: today } } }) : Promise.resolve(0),
+      prisma.order.aggregate({ where: { status: 'COMPLETED' }, _sum: { total: true } }),
+    ]);
+
+    res.json({
+      stats: { todayOrders, weekOrders, todayUsers, fraudLogs, totalRevenue: totalRevenue._sum.total || 0 },
+      recentActivity: [],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

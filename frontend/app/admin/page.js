@@ -47,6 +47,7 @@ function AdminContent() {
     { id: 'device-access', label: 'Device Access', icon: Smartphone },
     { id: 'fraud', label: 'Fraud Detection', icon: AlertTriangle },
     { id: 'ai-monitor', label: 'AI Monitor', icon: TrendingUp },
+    { id: 'disputes', label: 'Disputes', icon: Shield },
     { id: 'reports', label: 'Reports', icon: BookOpen },
     { id: 'settings', label: 'System', icon: Settings },
   ]
@@ -106,6 +107,7 @@ function AdminContent() {
           {activeTab === 'pages' && <PagesEditor />}
           {activeTab === 'site-settings' && <SiteSettingsEditor />}
           {activeTab === 'device-access' && <DeviceAccessPanel />}
+          {activeTab === 'disputes' && <DisputesPanel />}
           {activeTab === 'fraud' && <FraudPanel />}
           {activeTab === 'ai-monitor' && <AIMonitorPanel />}
           {activeTab === 'reports' && <ReportsPanel />}
@@ -677,6 +679,77 @@ function ReportsPanel() {
           <div className="bg-gray-700/50 rounded-lg p-3 text-center"><p className="text-2xl font-bold">৳{report.netRevenue?.toLocaleString()}</p><p className="text-xs text-gray-400">Net Revenue</p></div>
         </div>
       ) : <p className="text-gray-400">Loading...</p>}
+    </div>
+  )
+}
+
+function DisputesPanel() {
+  const [disputes, setDisputes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+  useEffect(() => {
+    fetch('/api/admin/disputes', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json()).then(d => setDisputes(d.disputes || [])).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  const resolveDispute = async (id, status, resolution) => {
+    try {
+      await fetch(`/api/orders/disputes/${id}/resolve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status, resolution }),
+      })
+      setDisputes(prev => prev.map(d => d.id === id ? { ...d, status } : d))
+    } catch (e) {}
+  }
+
+  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><Shield className="w-6 h-6 text-primary-400" /> Dispute Management</h2>
+      <div className="space-y-4">
+        {disputes.length === 0 ? (
+          <div className="bg-gray-800/50 rounded-2xl p-12 text-center">
+            <Shield className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Disputes</h3>
+            <p className="text-sm text-gray-400">All disputes have been resolved.</p>
+          </div>
+        ) : disputes.map(dispute => (
+          <div key={dispute.id} className="bg-gray-800/50 rounded-2xl p-5 border border-gray-700">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                    dispute.status === 'OPEN' ? 'bg-yellow-500/20 text-yellow-400' :
+                    dispute.status === 'INVESTIGATING' ? 'bg-blue-500/20 text-blue-400' :
+                    dispute.status === 'RESOLVED' ? 'bg-green-500/20 text-green-400' :
+                    'bg-gray-500/20 text-gray-400'
+                  }`}>{dispute.status}</span>
+                  <span className="text-xs text-gray-400">Order #{dispute.order?.orderNumber?.slice(-8)}</span>
+                  <span className="text-xs text-gray-400">৳{dispute.order?.total?.toLocaleString()}</span>
+                </div>
+                <p className="font-semibold">{dispute.reason}</p>
+                {dispute.message && <p className="text-sm text-gray-400 mt-1">{dispute.message}</p>}
+                <p className="text-xs text-gray-500 mt-2">Created: {new Date(dispute.createdAt).toLocaleDateString()}</p>
+              </div>
+              {dispute.status === 'OPEN' || dispute.status === 'INVESTIGATING' ? (
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => resolveDispute(dispute.id, 'RESOLVED', 'Resolved by admin')} className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-xs font-semibold rounded-lg transition-colors">
+                    <CheckCircle className="w-3 h-3" /> Resolve
+                  </button>
+                  <button onClick={() => resolveDispute(dispute.id, 'DISMISSED', 'Dismissed by admin')} className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-xs font-semibold rounded-lg transition-colors">
+                    <XCircle className="w-3 h-3" /> Dismiss
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-gray-500 italic">Resolved</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
