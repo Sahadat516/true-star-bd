@@ -3,15 +3,24 @@
 import { useState, useEffect } from 'react'
 import Header from '../../components/Header'
 import Footer from '../../components/Footer'
-import { ShoppingBag, Package, Clock, CheckCircle, XCircle, RefreshCw, ChevronRight, AlertCircle } from 'lucide-react'
+import { ShoppingBag, Package, Clock, CheckCircle, XCircle, RefreshCw, ChevronRight, AlertCircle, Zap, Shield, Loader2, MessageCircle, Ban } from 'lucide-react'
 import Link from 'next/link'
 
 const STATUS_STYLES = {
-  PENDING: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-400', icon: Clock },
-  PROCESSING: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', icon: RefreshCw },
-  COMPLETED: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', icon: CheckCircle },
-  CANCELLED: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', icon: XCircle },
-  REFUNDED: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-400', icon: AlertCircle },
+  UNPAID: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-400', icon: Clock, label: 'Unpaid' },
+  PREPARING: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', icon: RefreshCw, label: 'Preparing' },
+  DELIVERING: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-400', icon: Zap, label: 'Delivering' },
+  COMPLETED: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', icon: CheckCircle, label: 'Completed' },
+  CANCELLED: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', icon: XCircle, label: 'Cancelled' },
+  REFUNDED: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-400', icon: RefreshCw, label: 'Refunded' },
+  RESOLUTION: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-700 dark:text-rose-400', icon: Shield, label: 'Resolution' },
+}
+
+const STATUS_FLOW = ['UNPAID', 'PREPARING', 'DELIVERING', 'COMPLETED']
+
+function getStatusStep(status) {
+  const idx = STATUS_FLOW.indexOf(status)
+  return idx >= 0 ? idx : -1
 }
 
 function OrdersContent() {
@@ -41,7 +50,7 @@ function OrdersContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0f172a]">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b]">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold mb-8">My Orders</h1>
@@ -65,7 +74,7 @@ function OrdersContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0f172a]">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b]">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold mb-8">My Orders</h1>
@@ -75,7 +84,7 @@ function OrdersContent() {
             {error.includes('sign in') ? (
               <Link href="/signin" className="btn-primary inline-flex mt-4">Sign In</Link>
             ) : (
-              <button onClick={() => window.location.reload()} className="btn-primary inline-flex mt-4">
+              <button onClick={() => window.location.reload()} className="btn-primary inline-flex mt-4 gap-2">
                 <RefreshCw className="w-4 h-4" /> Try Again
               </button>
             )}
@@ -87,13 +96,16 @@ function OrdersContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0f172a]">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0b]">
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">My Orders</h1>
+          <div>
+            <h1 className="text-2xl font-bold">My Orders</h1>
+            <p className="text-sm text-gray-500 mt-1">Track and manage your purchases</p>
+          </div>
           {orders.length > 0 && (
-            <span className="text-sm text-gray-500">{orders.length} order{orders.length !== 1 ? 's' : ''}</span>
+            <span className="text-sm text-gray-500 bg-white dark:bg-gray-800 px-3 py-1 rounded-full">{orders.length} order{orders.length !== 1 ? 's' : ''}</span>
           )}
         </div>
 
@@ -101,9 +113,7 @@ function OrdersContent() {
           <div className="card p-12 text-center">
             <Package className="w-20 h-20 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">No orders yet</h2>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              When you place an order, it will appear here. Start browsing our products to find something you love!
-            </p>
+            <p className="text-gray-500 mb-6 max-w-md mx-auto">When you place an order, it will appear here. Start browsing our products to find something you love!</p>
             <Link href="/products" className="btn-primary inline-flex gap-2">
               <ShoppingBag className="w-4 h-4" /> Browse Products
             </Link>
@@ -111,35 +121,41 @@ function OrdersContent() {
         ) : (
           <div className="space-y-4">
             {orders.map(order => {
-              const st = STATUS_STYLES[order.status] || STATUS_STYLES.PENDING
+              const st = STATUS_STYLES[order.status] || STATUS_STYLES.UNPAID
               const StatusIcon = st.icon
               const itemCount = order.items?.reduce((s, i) => s + i.quantity, 0) || 0
+              const activeDispute = order.disputes?.find(d => d.status === 'OPEN' || d.status === 'INVESTIGATING')
               return (
-                <Link key={order.id} href={`/orders/${order.id}`} className="block card-hover p-5">
+                <Link key={order.id} href={`/orders/${order.id}`} className="block card-hover p-5 group">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
                           <StatusIcon className="w-3.5 h-3.5" />
-                          {order.status}
+                          {st.label}
                         </span>
-                        <span className="text-xs text-gray-400">#{order.orderNumber?.slice(-8) || order.id?.slice(0,8)}</span>
+                        {activeDispute && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                            <Shield className="w-3 h-3" /> Dispute
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-400 font-mono">#{order.orderNumber?.slice(-8) || order.id?.slice(0,8)}</span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        <span>{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">
-                          ৳{order.total?.toLocaleString()}
-                        </span>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="text-gray-500">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+                        <span className="font-bold text-gray-900 dark:text-gray-100">৳{order.total?.toLocaleString()}</span>
                       </div>
                       {order.items?.[0] && (
-                        <p className="text-sm text-gray-500 mt-1 truncate">{order.items[0].productName}</p>
+                        <p className="text-sm text-gray-500 mt-1 truncate flex items-center gap-2">
+                          <Package className="w-3 h-3 shrink-0" />
+                          {order.items[0].productName}
+                          {order.items.length > 1 && <span className="text-xs text-gray-400">+{order.items.length - 1} more</span>}
+                        </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-right shrink-0">
-                      <div className="text-xs text-gray-400">
-                        {new Date(order.createdAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-300" />
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <div className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary-500 transition-colors" />
                     </div>
                   </div>
                 </Link>
