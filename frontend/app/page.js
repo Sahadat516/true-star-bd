@@ -6,6 +6,7 @@ import { useApp } from '../components/AppContext'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import ChatWidget from '../components/ChatWidget'
+import BackToTop from '../components/BackToTop'
 import { Search, Star, TrendingUp, Clock, Shield, Zap, ChevronRight, ArrowRight, Sparkles, ShoppingBag, Users, Award, HeadphonesIcon, Wallet, ChevronLeft, CheckCircle, Truck, BadgeCheck, BarChart3, Gem, Gamepad2, Gift, Monitor, Smartphone, Globe2, Lock, MessageCircle, Tag, Flame, Eye, Heart } from 'lucide-react'
 
 function HomeContent() {
@@ -435,6 +436,7 @@ function HomeContent() {
 
       <Footer />
       <ChatWidget />
+      <BackToTop />
     </div>
   )
 }

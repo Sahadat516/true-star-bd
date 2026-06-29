@@ -1,6 +1,9 @@
 import './globals.css'
 import { AppProvider } from '../components/AppContext'
 import MetaPixel from '../components/MetaPixel'
+import dynamic from 'next/dynamic'
+
+const BackToTop = dynamic(() => import('../components/BackToTop'), { ssr: false })
 
 export const metadata = {
   title: { default: 'True Star BD Limited - Premium Digital Marketplace', template: '%s | True Star BD' },
@@ -78,7 +81,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen bg-gray-50 dark:bg-[#0f172a]">
         <MetaPixel />
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>{children}<BackToTop /></AppProvider>
       </body>
     </html>
   )
