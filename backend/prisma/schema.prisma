@@ -46,6 +46,7 @@ enum OrderStatus {
   CANCELLED
   REFUNDED
   RESOLUTION
+  DISPUTED
 }
 
 enum PaymentStatus {

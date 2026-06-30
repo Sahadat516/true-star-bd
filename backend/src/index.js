@@ -43,6 +43,7 @@ app.use('/api/fraud', require('./routes/fraud'));
 app.use('/api/admin', require('./routes/adminDevices'));
 app.use('/api/admin', require('./routes/adminMonitor'));
 app.use('/api/payouts', require('./routes/payouts'));
+app.use('/api/disputes', require('./routes/disputes'));
 app.use('/api/search', require('./routes/search'));
 app.use('/uploads', express.static('public/uploads'));
 

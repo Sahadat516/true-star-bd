@@ -175,19 +175,6 @@ router.get('/orders', adminAuth, async (req, res) => {
   }
 });
 
-// All disputes
-router.get('/disputes', adminAuth, async (req, res) => {
-  try {
-    const disputes = await prisma.dispute.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { order: { select: { orderNumber: true, total: true, status: true } } },
-    });
-    res.json({ disputes });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // AI monitor data
 router.get('/monitor', adminAuth, async (req, res) => {
   try {

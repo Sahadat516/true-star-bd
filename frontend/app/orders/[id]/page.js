@@ -57,7 +57,7 @@ function OrderDetailContent({ params }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Action failed')
       if (data.order) setOrder(data.order)
-      if (data.dispute) setOrder(prev => ({ ...prev, disputes: [...(prev.disputes || []), data.dispute], status: 'RESOLUTION' }))
+      if (data.dispute) setOrder(prev => ({ ...prev, disputes: [...(prev.disputes || []), data.dispute], status: 'DISPUTED' }))
       setShowCancel(false)
       setShowDispute(false)
     } catch (err) {

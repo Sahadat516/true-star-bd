@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '../../components/AppContext'
-import { LayoutDashboard, Users, ShoppingBag, Package, Settings, LogOut, TrendingUp, DollarSign, AlertTriangle, CheckCircle, XCircle, Menu, X, Bell, Store, FileText, Shield, Edit3, Globe, Save, Plus, Trash2, Eye, BookOpen, CreditCard, Smartphone } from 'lucide-react'
+import { LayoutDashboard, Users, ShoppingBag, Package, Settings, LogOut, TrendingUp, DollarSign, AlertTriangle, CheckCircle, XCircle, Menu, X, Bell, Store, FileText, Shield, Edit3, Globe, Save, Plus, Trash2, Eye, BookOpen, CreditCard, Smartphone, MessageCircle, Loader2, Search, ArrowRight, RefreshCw } from 'lucide-react'
 
 function AdminContent() {
   const router = useRouter()
@@ -783,29 +783,146 @@ function PayoutsPanel() {
 function DisputesPanel() {
   const [disputes, setDisputes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [chatLog, setChatLog] = useState(null)
+  const [chatLoading, setChatLoading] = useState(false)
+  const [resolution, setResolution] = useState('')
+  const [actionLoading, setActionLoading] = useState(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
-  useEffect(() => {
-    fetch('/api/admin/disputes', { headers: { Authorization: `Bearer ${token}` } })
+  const loadDisputes = () => {
+    setLoading(true)
+    fetch('/api/disputes/admin', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json()).then(d => setDisputes(d.disputes || [])).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+  }
 
-  const resolveDispute = async (id, status, resolution) => {
+  useEffect(loadDisputes, [])
+
+  const updateStatus = async (id, status) => {
+    setActionLoading(id)
     try {
-      await fetch(`/api/orders/disputes/${id}/resolve`, {
+      await fetch(`/api/disputes/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status, resolution }),
+        body: JSON.stringify({ status }),
       })
       setDisputes(prev => prev.map(d => d.id === id ? { ...d, status } : d))
     } catch (e) {}
+    setActionLoading(null)
+  }
+
+  const resolveDispute = async (id, decision) => {
+    setActionLoading(id)
+    try {
+      await fetch(`/api/disputes/${id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ decision, resolution: resolution || undefined }),
+      })
+      loadDisputes()
+      setChatLog(null)
+      setResolution('')
+    } catch (e) {}
+    setActionLoading(null)
+  }
+
+  const viewChatLog = async (id) => {
+    setChatLoading(true)
+    setChatLog(null)
+    try {
+      const res = await fetch(`/api/disputes/${id}/chat-logs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const d = await res.json()
+      setChatLog(d)
+    } catch (e) {}
+    setChatLoading(false)
   }
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
 
+  if (chatLog) {
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => { setChatLog(null); setResolution('') }} className="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+            <ArrowRight className="w-5 h-5 rotate-180" />
+          </button>
+          <h2 className="text-2xl font-bold flex items-center gap-3">
+            <MessageCircle className="w-6 h-6 text-primary-400" />
+            Chat Logs — Order #{chatLog.order?.orderNumber?.slice(-8)}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="bg-gray-800/50 rounded-2xl p-4 border border-gray-700">
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Buyer</p>
+            <p className="font-semibold">{chatLog.buyer?.firstName} {chatLog.buyer?.lastName}</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-2xl p-4 border border-gray-700">
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Vendor</p>
+            <p className="font-semibold">{chatLog.vendor?.businessName || 'N/A'}</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-2xl p-4 border border-gray-700">
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Order Total</p>
+            <p className="font-semibold">৳{chatLog.order?.total?.toLocaleString()}</p>
+            <p className="text-xs text-gray-400">Status: {chatLog.order?.status}</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 rounded-2xl border border-gray-700 mb-6">
+          <div className="p-4 border-b border-gray-700">
+            <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4 text-yellow-400" /> Dispute Details</h3>
+            <p className="text-sm font-medium mt-1">{chatLog.dispute?.reason}</p>
+            {chatLog.dispute?.message && <p className="text-sm text-gray-400 mt-1">{chatLog.dispute.message}</p>}
+          </div>
+          <div className="p-4 max-h-[400px] overflow-y-auto space-y-3">
+            {chatLog.messages?.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No chat messages between buyer and vendor.</p>
+            ) : chatLog.messages?.map(msg => (
+              <div key={msg.id} className={`flex ${msg.sender?.id === chatLog.buyer?.id ? 'justify-start' : 'justify-end'}`}>
+                <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${msg.sender?.id === chatLog.buyer?.id ? 'bg-gray-700 text-gray-200' : 'bg-primary-600/20 text-primary-300 border border-primary-500/20'}`}>
+                  <p className="text-xs font-semibold mb-0.5 opacity-70">
+                    {msg.sender?.firstName || 'Unknown'} {msg.sender?.role === 'VENDOR' ? '(Seller)' : msg.sender?.role === 'ADMIN' || msg.sender?.role === 'SUPER_ADMIN' ? '(Staff)' : '(Buyer)'}
+                  </p>
+                  <p className="text-sm">{msg.message}</p>
+                  <p className="text-[10px] mt-1 opacity-50">{new Date(msg.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 rounded-2xl p-5 border border-gray-700">
+          <h3 className="font-semibold mb-4 flex items-center gap-2"><Shield className="w-4 h-4 text-primary-400" /> Resolution Decision</h3>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Resolution Note (optional)</label>
+            <textarea value={resolution} onChange={e => setResolution(e.target.value)}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm outline-none focus:border-primary-500"
+              rows={2} placeholder="Add a note about your decision..." />
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => resolveDispute(chatLog.dispute?.id || chatLog.dispute_id, 'REFUND')} disabled={actionLoading}
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2">
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+              Refund Buyer
+            </button>
+            <button onClick={() => resolveDispute(chatLog.dispute?.id || chatLog.dispute_id, 'RELEASE')} disabled={actionLoading}
+              className="px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2">
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              Release to Seller
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-3"><Shield className="w-6 h-6 text-primary-400" /> Dispute Management</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold flex items-center gap-3"><Shield className="w-6 h-6 text-primary-400" /> Dispute Management</h2>
+        <button onClick={loadDisputes} className="p-2 hover:bg-gray-700 rounded-lg transition-colors"><RefreshCw className="w-4 h-4" /></button>
+      </div>
       <div className="space-y-4">
         {disputes.length === 0 ? (
           <div className="bg-gray-800/50 rounded-2xl p-12 text-center">
@@ -816,8 +933,8 @@ function DisputesPanel() {
         ) : disputes.map(dispute => (
           <div key={dispute.id} className="bg-gray-800/50 rounded-2xl p-5 border border-gray-700">
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                     dispute.status === 'OPEN' ? 'bg-yellow-500/20 text-yellow-400' :
                     dispute.status === 'INVESTIGATING' ? 'bg-blue-500/20 text-blue-400' :
@@ -826,23 +943,33 @@ function DisputesPanel() {
                   }`}>{dispute.status}</span>
                   <span className="text-xs text-gray-400">Order #{dispute.order?.orderNumber?.slice(-8)}</span>
                   <span className="text-xs text-gray-400">৳{dispute.order?.total?.toLocaleString()}</span>
+                  {dispute.user && <span className="text-xs text-gray-400">by {dispute.user.firstName} {dispute.user.lastName}</span>}
                 </div>
                 <p className="font-semibold">{dispute.reason}</p>
-                {dispute.message && <p className="text-sm text-gray-400 mt-1">{dispute.message}</p>}
-                <p className="text-xs text-gray-500 mt-2">Created: {new Date(dispute.createdAt).toLocaleDateString()}</p>
+                {dispute.message && <p className="text-sm text-gray-400 mt-1 line-clamp-2">{dispute.message}</p>}
+                <p className="text-xs text-gray-500 mt-2">{new Date(dispute.createdAt).toLocaleDateString()} • {dispute.order?.status}</p>
               </div>
-              {dispute.status === 'OPEN' || dispute.status === 'INVESTIGATING' ? (
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => resolveDispute(dispute.id, 'RESOLVED', 'Resolved by admin')} className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-xs font-semibold rounded-lg transition-colors">
-                    <CheckCircle className="w-3 h-3" /> Resolve
+              <div className="flex gap-2 shrink-0">
+                {dispute.status === 'OPEN' && (
+                  <button onClick={() => updateStatus(dispute.id, 'INVESTIGATING')} disabled={actionLoading === dispute.id}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-semibold rounded-lg transition-colors">
+                    {actionLoading === dispute.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Investigate'}
                   </button>
-                  <button onClick={() => resolveDispute(dispute.id, 'DISMISSED', 'Dismissed by admin')} className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-xs font-semibold rounded-lg transition-colors">
-                    <XCircle className="w-3 h-3" /> Dismiss
-                  </button>
-                </div>
-              ) : (
-                <span className="text-xs text-gray-500 italic">Resolved</span>
-              )}
+                )}
+                {dispute.status === 'OPEN' || dispute.status === 'INVESTIGATING' ? (
+                  <>
+                    <button onClick={() => viewChatLog(dispute.id)} disabled={chatLoading}
+                      className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1">
+                      <MessageCircle className="w-3 h-3" /> Review Chat
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-xs text-gray-500 italic self-center">
+                    {dispute.status === 'RESOLVED' ? 'Resolved' : 'Dismissed'}
+                    {dispute.resolution && `: ${dispute.resolution}`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}

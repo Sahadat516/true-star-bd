@@ -246,67 +246,13 @@ router.post('/:id/dispute', auth, async (req, res) => {
     const existingDispute = await prisma.dispute.findFirst({ where: { orderId: req.params.id, status: { in: ['OPEN', 'INVESTIGATING'] } } });
     if (existingDispute) return res.status(400).json({ error: 'An active dispute already exists for this order' });
 
-    // Set order to RESOLUTION
-    await prisma.order.update({ where: { id: req.params.id }, data: { status: 'RESOLUTION' } });
+    // Freeze escrow by setting order to DISPUTED
+    await prisma.order.update({ where: { id: req.params.id }, data: { status: 'DISPUTED' } });
 
     const dispute = await prisma.dispute.create({
       data: { orderId: req.params.id, userId: req.user.id, vendorId: order.vendorId, reason, message },
     });
     res.status(201).json({ dispute });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get disputes (user or vendor)
-router.get('/disputes', auth, async (req, res) => {
-  try {
-    const vendor = await prisma.vendor.findUnique({ where: { userId: req.user.id } });
-    const disputes = await prisma.dispute.findMany({
-      where: {
-        OR: [
-          { userId: req.user.id },
-          ...(vendor ? [{ vendorId: vendor.id }] : []),
-        ],
-      },
-      include: { order: { select: { orderNumber: true, status: true, total: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json({ disputes });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Admin resolves dispute
-router.patch('/disputes/:id/resolve', auth, async (req, res) => {
-  try {
-    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) return res.status(403).json({ error: 'Admin only' });
-    const { status, resolution } = req.body;
-    if (!['RESOLVED', 'DISMISSED'].includes(status)) return res.status(400).json({ error: 'Invalid resolution status' });
-
-    const dispute = await prisma.dispute.findUnique({ where: { id: req.params.id }, include: { order: true } });
-    if (!dispute) return res.status(404).json({ error: 'Dispute not found' });
-
-    await prisma.dispute.update({
-      where: { id: req.params.id },
-      data: { status, resolution, resolvedBy: req.user.id, resolvedAt: new Date() },
-    });
-
-    // Restore order status
-    if (status === 'RESOLVED' && dispute.order.status === 'RESOLUTION') {
-      await prisma.order.update({
-        where: { id: dispute.orderId },
-        data: { status: 'COMPLETED', resolvedAt: new Date() },
-      });
-    } else if (status === 'DISMISSED' && dispute.order.status === 'RESOLUTION') {
-      await prisma.order.update({
-        where: { id: dispute.orderId },
-        data: { status: dispute.order.status === 'RESOLUTION' ? 'COMPLETED' : dispute.order.status },
-      });
-    }
-
-    res.json({ dispute: await prisma.dispute.findUnique({ where: { id: req.params.id } }) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
