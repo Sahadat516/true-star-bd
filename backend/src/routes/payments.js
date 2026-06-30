@@ -50,17 +50,13 @@ router.post('/confirm/:paymentId', auth, async (req, res) => {
       include: { items: true },
     });
 
-    // Update vendor totalSales and totalEarnings
+    // Update vendor totalSales (earnings credited on order completion)
     if (order.vendorId) {
       const vendor = await prisma.vendor.findUnique({ where: { id: order.vendorId } });
       if (vendor) {
-        const orderTotal = order.items.reduce((s, i) => s + i.vendorEarnings, 0);
         await prisma.vendor.update({
           where: { id: order.vendorId },
-          data: {
-            totalSales: (vendor.totalSales || 0) + 1,
-            totalEarnings: (vendor.totalEarnings || 0) + orderTotal,
-          },
+          data: { totalSales: (vendor.totalSales || 0) + 1 },
         });
       }
     }

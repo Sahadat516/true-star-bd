@@ -69,6 +69,11 @@ router.post('/request', auth(['VENDOR', 'ADMIN', 'SUPER_ADMIN']), async (req, re
     const payout = await prisma.payoutRequest.create({
       data: { vendorId: vendor.id, amount, fee, netAmount, paymentMethod, accountDetails: accountDetails ? JSON.stringify(accountDetails) : null }
     })
+    // Decrement pending balance immediately to prevent double-spending
+    await prisma.vendor.update({
+      where: { id: vendor.id },
+      data: { pendingBalance: { decrement: amount } }
+    })
     res.json({ payout })
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
@@ -124,13 +129,7 @@ router.patch('/admin/:id/complete', auth(['ADMIN', 'SUPER_ADMIN']), async (req, 
     await prisma.payoutRequest.update({
       where: { id }, data: { status: 'COMPLETED', processedBy: req.user.id, processedAt: new Date(), notes: transactionId ? `TX: ${transactionId}` : undefined }
     })
-    // Deduct from pendingBalance
-    await prisma.vendor.update({
-      where: { id: payout.vendorId },
-      data: { pendingBalance: { decrement: payout.amount }, totalEarnings: { decrement: 0 } }
-    })
-    // Update vendor totalEarnings to reflect actual net payout reduction
-    // Actually totalEarnings should stay the same as history. Only pendingBalance changes.
+    // pendingBalance was already decremented on request creation, no further deduction needed
     res.json({ success: true })
   } catch (e) { res.status(500).json({ error: e.message }) }
 })

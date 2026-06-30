@@ -195,11 +195,16 @@ router.patch('/vendor/:id/status', vendorAuth, async (req, res) => {
       include: { items: true },
     });
 
-    // Update vendor stats on completion
+    // Update vendor stats + credit wallet on completion
     if (status === 'COMPLETED') {
       const { updateVendorStats, updateSellerRank } = require('../services/sellerRank');
       await updateVendorStats(req.vendor.id);
       await updateSellerRank(req.vendor.id);
+      const earnings = updated.items.reduce((s, i) => s + (i.vendorEarnings || 0), 0);
+      await prisma.vendor.update({
+        where: { id: req.vendor.id },
+        data: { pendingBalance: { increment: earnings }, totalEarnings: { increment: earnings } },
+      });
     }
 
     res.json({ order: updated });
@@ -221,11 +226,16 @@ router.patch('/:id/confirm-receipt', auth, async (req, res) => {
       data: { status: 'COMPLETED', resolvedAt: new Date() },
     });
 
-    // Update vendor stats
+    // Update vendor stats + credit wallet
     if (order.vendorId) {
       const { updateVendorStats, updateSellerRank } = require('../services/sellerRank');
       await updateVendorStats(order.vendorId);
       await updateSellerRank(order.vendorId);
+      const earnings = updated.items.reduce((s, i) => s + (i.vendorEarnings || 0), 0);
+      await prisma.vendor.update({
+        where: { id: order.vendorId },
+        data: { pendingBalance: { increment: earnings }, totalEarnings: { increment: earnings } },
+      });
     }
 
     res.json({ order: updated });

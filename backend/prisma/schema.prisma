@@ -158,7 +158,7 @@ model Vendor {
   description     String?
   logo            String?
   coverImage      String?
-  commission      Float       @default(10.0)
+  commission      Float       @default(5.0)
   totalEarnings   Float       @default(0.0)
   pendingBalance  Float       @default(0.0)
   totalSales      Int         @default(0)
