@@ -186,7 +186,7 @@ function VendorProducts({ vendor }) {
 
   useEffect(() => {
     loadProducts()
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || [])).catch(() => {})
+    fetch('/api/categories').then(r => r.json()).then(d => setCategories((d.categories || []).sort((a,b) => a.name.localeCompare(b.name)))).catch(() => {})
   }, [])
 
   const loadProducts = async () => {
@@ -222,7 +222,7 @@ function VendorProducts({ vendor }) {
     try {
       const payload = {
         name: form.name,
-        categoryId: parseInt(form.categoryId),
+        categoryId: form.categoryId,
         price: parseFloat(form.price),
         salePrice: form.salePrice ? parseFloat(form.salePrice) : null,
         description: form.description,

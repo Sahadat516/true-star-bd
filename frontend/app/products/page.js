@@ -28,7 +28,7 @@ function ProductsContent() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || [])).catch(() => setError('Failed to load categories'))
+    fetch('/api/categories').then(r => r.json()).then(d => setCategories((d.categories || []).sort((a,b) => a.name.localeCompare(b.name)))).catch(() => setError('Failed to load categories'))
   }, [])
 
   useEffect(() => {

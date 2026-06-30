@@ -23,7 +23,7 @@ export default function Header() {
   const megaTimeout = useRef(null)
 
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || [])).catch(() => {})
+    fetch('/api/categories').then(r => r.json()).then(d => setCategories((d.categories || []).sort((a,b) => a.name.localeCompare(b.name)))).catch(() => {})
     fetch('/api/cms/settings').then(r => r.json()).then(d => {
       const s = {}; (d.settings || []).forEach(item => { s[item.key] = item.value })
       setSiteSettings(s)

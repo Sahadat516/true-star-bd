@@ -54,7 +54,7 @@ export default function SearchPage() {
       .finally(() => setLoading(false))
 
     if (!filters) {
-      fetch('/api/search/filters').then(r => r.json()).then(d => setFilters(d)).catch(() => {})
+      fetch('/api/search/filters').then(r => r.json()).then(d => setFilters({ ...d, categories: (d.categories || []).sort((a,b) => a.name.localeCompare(b.name)) })).catch(() => {})
     }
   }, [q, category, minPrice, maxPrice, rating, rank, deliveryType, sort, page])
 

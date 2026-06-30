@@ -93,7 +93,7 @@ router.get('/:slug', async (req, res) => {
 // Update product (vendor or admin)
 router.put('/:id', auth, async (req, res) => {
   try {
-    const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     // If vendor, check ownership
     if (req.user.role === 'VENDOR') {
@@ -117,7 +117,7 @@ router.put('/:id', auth, async (req, res) => {
 // Delete product (vendor or admin)
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
     if (!product) return res.status(404).json({ error: 'Product not found' });
     if (req.user.role === 'VENDOR') {
       const vendor = await prisma.vendor.findUnique({ where: { userId: req.user.id } });
