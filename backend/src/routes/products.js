@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     const where = { isActive: true, isApproved: true };
 
     if (category) where.categoryId = category;
-    if (search) where.name = { contains: search, mode: 'insensitive' };
+    if (search) where.name = { contains: search };
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) where.price.gte = parseFloat(minPrice);

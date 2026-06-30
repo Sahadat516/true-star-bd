@@ -4,8 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useApp } from './AppContext'
 import { ShoppingCart, User, Menu, X, ChevronDown, Search, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Bell, TrendingUp, Grid3X3, Sparkles, MessageCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function Header() {
+  const router = useRouter()
   const { user, vendor, cart, cartCount, theme, language, toggleTheme, changeLanguage, logout } = useApp()
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -30,7 +32,7 @@ export default function Header() {
 
   useEffect(() => {
     if (searchQuery.length > 1) {
-      fetch(`/api/products?search=${searchQuery}&limit=5`).then(r => r.json()).then(d => setSearchResults(d.products || [])).catch(() => {})
+      fetch(`/api/search/suggestions?q=${encodeURIComponent(searchQuery)}`).then(r => r.json()).then(d => setSearchResults(d.suggestions?.products || [])).catch(() => {})
     } else setSearchResults([])
   }, [searchQuery])
 
@@ -130,6 +132,7 @@ export default function Header() {
             <div className="relative w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) { router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`); setSearchQuery(''); setShowSearch(false); } }}
                 placeholder={t('search')}
                 className="w-full pl-11 pr-12 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#131316] focus:bg-white dark:focus:bg-[#1a1a1e] focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-all text-sm" />
               {searchQuery.length > 0 && (
@@ -155,7 +158,7 @@ export default function Header() {
                     </Link>
                   ))}
                 </div>
-                <Link href={`/products?search=${searchQuery}`}
+                <Link href={`/search?q=${encodeURIComponent(searchQuery)}`}
                   className="block text-center py-3 text-sm font-medium text-primary-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
                   View all {searchResults.length}+ results for &quot;{searchQuery}&quot;
                 </Link>
@@ -351,7 +354,9 @@ export default function Header() {
         <div className="lg:hidden px-4 pb-3 animate-fade-in">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t('search')}
+            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) { router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`); setSearchQuery(''); setShowSearch(false); } }}
+              placeholder={t('search')}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#131316] focus:ring-2 focus:ring-primary-500/30 outline-none text-sm" />
           </div>
         </div>
