@@ -14,19 +14,26 @@ function AdminContent() {
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [data, setData] = useState({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    if (!token) { router.push('/signin'); return }
+    if (!mounted) return;
+    const token = localStorage.getItem('token')
+    if (!token) { router.replace('/signin'); return }
     if (authLoading) return;
     if (!user || !['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(user.role)) {
-      router.push('/signin')
+      router.replace('/signin')
       return
     }
     loadDashboard()
-  }, [user, authLoading])
+  }, [mounted, user, authLoading])
 
-  const loadDashboard = async () => {
+  if (!mounted) return <div className="min-h-screen bg-gray-900" />
+  if (authLoading || loading) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" /></div>
+
+  async function loadDashboard() {
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }

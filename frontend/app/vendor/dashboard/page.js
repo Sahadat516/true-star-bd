@@ -16,19 +16,20 @@ function VendorDashboardContent() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
+    if (!mounted) return
     if (authLoading) return;
-    if (!user || user.role !== 'VENDOR') {
-      router.push('/signin?role=vendor')
-      return
-    }
+    if (!user || user.role !== 'VENDOR') { router.replace('/signin?role=vendor'); return }
     if (!vendor?.isApproved) {
       setLoading(false)
       return
     }
     loadDashboard()
-  }, [user, vendor])
+  }, [mounted, user, vendor])
 
   const loadDashboard = async () => {
     try {

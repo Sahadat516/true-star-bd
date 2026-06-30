@@ -19,14 +19,19 @@ export default function VendorPayoutsPage() {
   const [paymentMethod, setPaymentMethod] = useState('bKash')
   const [accountNumber, setAccountNumber] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
+    if (!mounted) return;
+    const token = localStorage.getItem('token')
+    if (!token) { router.replace('/signin?role=vendor'); return }
     if (authLoading) return;
-    if (!user || user.role !== 'VENDOR') { router.push('/signin?role=vendor'); return }
+    if (!user || user.role !== 'VENDOR') { router.replace('/signin?role=vendor'); return }
     if (!vendor?.isApproved) { setLoading(false); return }
     loadData()
-  }, [user, vendor])
+  }, [mounted, user, vendor])
 
   const loadData = async () => {
     try {
