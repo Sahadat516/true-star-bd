@@ -209,7 +209,7 @@ function HomeContent() {
                         </div>
                       </div>
                     </Link>
-                    <Link href="/category/software" className="block group">
+                    <Link href="/category/software-apps" className="block group">
                       <div className="g2g-category-card min-h-[140px]" style={{ background: 'linear-gradient(135deg, #F68500, #c46a00)' }}>
                         <div className="text-4xl mb-2">💻</div>
                         <h3 className="font-bold text-lg">Software</h3>

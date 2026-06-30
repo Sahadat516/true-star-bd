@@ -21,7 +21,7 @@ function CategoryContent({ params }) {
   useEffect(() => {
     setLoading(true); setError('')
     fetch(`/api/categories/${params.slug}?sort=${sortBy}`)
-      .then(r => { if (!r.ok) throw new Error('Failed to load category'); return r.json() })
+      .then(r => { if (!r.ok) throw new Error(r.status === 404 ? 'Category not found' : 'Failed to load category'); return r.json() })
       .then(d => {
         setCategory(d.category)
         let prods = d.category?.products || []
