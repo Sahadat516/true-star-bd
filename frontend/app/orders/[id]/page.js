@@ -8,7 +8,7 @@ import Footer from '../../../components/Footer'
 import {
   ArrowLeft, Clock, CheckCircle, XCircle, RefreshCw, Zap, Shield, AlertCircle,
   ChevronRight, Package, Loader2, Ban, MessageCircle, Download, FileText,
-  ChevronDown, ChevronUp, Send
+  ChevronDown, ChevronUp, Send, Star
 } from 'lucide-react'
 
 const STATUS_FLOW = ['UNPAID', 'PREPARING', 'DELIVERING', 'COMPLETED']
@@ -21,6 +21,7 @@ const STATUS_INFO = {
   CANCELLED: { label: 'Cancelled', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30', icon: XCircle },
   REFUNDED: { label: 'Refunded', color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/30', icon: RefreshCw },
   RESOLUTION: { label: 'Resolution', color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/30', icon: Shield },
+  DISPUTED: { label: 'Disputed', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30', icon: Shield },
 }
 
 function OrderDetailContent({ params }) {
@@ -34,6 +35,9 @@ function OrderDetailContent({ params }) {
   const [disputeReason, setDisputeReason] = useState('')
   const [disputeMessage, setDisputeMessage] = useState('')
   const [showDispute, setShowDispute] = useState(false)
+  const [reviewForm, setReviewForm] = useState({})
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewSubmitted, setReviewSubmitted] = useState({})
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -65,6 +69,24 @@ function OrderDetailContent({ params }) {
     } finally {
       setActionLoading(null)
     }
+  }
+
+  const submitReview = async (productId) => {
+    const rating = reviewForm[productId]?.rating
+    if (!rating) { alert('Please select a star rating'); return }
+    setReviewSubmitting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`/api/reviews/order/${params.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId, rating, title: reviewForm[productId]?.title || '', comment: reviewForm[productId]?.comment || '' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to submit review')
+      setReviewSubmitted(prev => ({ ...prev, [productId]: true }))
+    } catch (err) { alert(err.message) }
+    setReviewSubmitting(false)
   }
 
   if (loading) return (
@@ -308,6 +330,48 @@ function OrderDetailContent({ params }) {
                 )}
               </div>
             )}
+
+            {/* Reviews - for COMPLETED orders */}
+            {order.status === 'COMPLETED' && order.items?.map(item => (
+              <div key={item.id} className="card p-4 mt-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                    {item.product?.image ? <img src={item.product.image} className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">{item.productName || item.product?.name}</p>
+                    <p className="text-xs text-gray-500">Qty: {item.quantity} × ৳{item.price}</p>
+                  </div>
+                </div>
+                {reviewSubmitted[item.productId] ? (
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
+                    <CheckCircle className="w-4 h-4" /> Review submitted! Thank you.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map(s => (
+                        <button key={s} onClick={() => setReviewForm(prev => ({ ...prev, [item.productId]: { ...prev[item.productId], rating: s } }))}
+                          className={`p-0.5 transition-colors ${(reviewForm[item.productId]?.rating || 0) >= s ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`}>
+                          <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </button>
+                      ))}
+                      <span className="text-xs text-gray-400 ml-1">
+                        {reviewForm[item.productId]?.rating ? `${reviewForm[item.productId].rating}/5` : 'Tap to rate'}
+                      </span>
+                    </div>
+                    <input value={reviewForm[item.productId]?.title || ''} onChange={e => setReviewForm(prev => ({ ...prev, [item.productId]: { ...prev[item.productId], title: e.target.value } }))}
+                      placeholder="Review title (optional)" className="input-field text-sm" />
+                    <textarea value={reviewForm[item.productId]?.comment || ''} onChange={e => setReviewForm(prev => ({ ...prev, [item.productId]: { ...prev[item.productId], comment: e.target.value } }))}
+                      placeholder="Write your review..." className="input-field text-sm min-h-[60px]" rows={2} />
+                    <button onClick={() => submitReview(item.productId)} disabled={reviewSubmitting} className="btn-primary text-xs py-2">
+                      {reviewSubmitting ? <Loader2 className="w-3 h-3 animate-spin inline mr-1" /> : <Star className="w-3 h-3 inline mr-1" />}
+                      Submit Review
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </main>
