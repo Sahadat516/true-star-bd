@@ -3,16 +3,17 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useApp } from './AppContext'
-import { ShoppingCart, User, Menu, X, ChevronDown, Search, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Bell, TrendingUp, Grid3X3, Sparkles, MessageCircle } from 'lucide-react'
+import { ShoppingCart, User, Menu, X, ChevronDown, Search, Sun, Moon, Globe, LogOut, LayoutDashboard, Package, Bell, TrendingUp, Grid3X3, Sparkles, MessageCircle, CheckCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function Header() {
   const router = useRouter()
-  const { user, vendor, cart, cartCount, theme, language, toggleTheme, changeLanguage, logout } = useApp()
+  const { user, vendor, cart, cartCount, theme, language, toggleTheme, changeLanguage, logout, notifications, unreadCount, markNotificationRead, markAllRead } = useApp()
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
   const [categories, setCategories] = useState([])
   const [searchResults, setSearchResults] = useState([])
   const [showSearch, setShowSearch] = useState(false)
@@ -29,6 +30,12 @@ export default function Header() {
       setSiteSettings(s)
     }).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const handleClick = (e) => { if (notifOpen && !e.target.closest('.notif-wrap')) setNotifOpen(false) }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [notifOpen])
 
   useEffect(() => {
     if (searchQuery.length > 1) {
@@ -189,10 +196,44 @@ export default function Header() {
 
             {/* Notifications */}
             {user && (
-              <button className="relative p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative notif-wrap">
+                <button onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen) loadNotifications() }}
+                  className="relative p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-red-500/30 px-1">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#131316] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 z-50 animate-fade-in max-h-96 flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                      <h3 className="font-bold text-sm">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button onClick={() => { markAllRead() }} className="text-xs text-primary-600 hover:underline flex items-center gap-1">
+                          <CheckCheck className="w-3 h-3" /> Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="overflow-y-auto flex-1">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center text-gray-400 text-sm">No notifications yet</div>
+                      ) : notifications.slice(0, 20).map(n => (
+                        <button key={n.id} onClick={() => { if (!n.isRead) markNotificationRead(n.id); setNotifOpen(false) }}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0 ${!n.isRead ? 'bg-primary-50/50 dark:bg-primary-900/10' : ''}`}>
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${!n.isRead ? 'bg-primary-500' : 'bg-transparent'}`} />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold">{n.title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-1">{new Date(n.createdAt).toLocaleDateString()} {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* User menu */}

@@ -4,6 +4,8 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
+const { createNotification } = require('../services/notification');
+const { sendEmail, orderStatusEmail } = require('../services/email');
 
 // Initialize payment
 router.post('/initiate', auth, async (req, res) => {
@@ -52,12 +54,17 @@ router.post('/confirm/:paymentId', auth, async (req, res) => {
 
     // Update vendor totalSales (earnings credited on order completion)
     if (order.vendorId) {
-      const vendor = await prisma.vendor.findUnique({ where: { id: order.vendorId } });
+      const vendor = await prisma.vendor.findUnique({ where: { id: order.vendorId }, include: { user: { select: { id: true, email: true, firstName: true } } } });
       if (vendor) {
         await prisma.vendor.update({
           where: { id: order.vendorId },
           data: { totalSales: (vendor.totalSales || 0) + 1 },
         });
+
+        const io = req.app.get('io');
+        createNotification({ userId: vendor.user.id, title: 'Payment Received', message: `Payment confirmed for order #${order.orderNumber} — ৳${order.total}`, type: 'payment', link: '/vendor/dashboard', io });
+        createNotification({ userId: order.userId, title: 'Payment Confirmed', message: `Your payment of ৳${order.total} for order #${order.orderNumber} is confirmed`, type: 'payment', link: `/orders/${order.id}`, io });
+        await sendEmail({ to: vendor.user.email, ...orderStatusEmail({ user: vendor.user, order, oldStatus: 'UNPAID', newStatus: 'PREPARING' }) });
       }
     }
 

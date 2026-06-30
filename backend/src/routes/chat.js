@@ -4,6 +4,7 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
+const { createNotification } = require('../services/notification');
 
 function generateResponse(message, context = {}) {
   const lower = (message || '').toLowerCase();
@@ -132,15 +133,22 @@ router.get('/history/:chatId', auth, async (req, res) => {
 // Send message
 router.post('/send', auth, async (req, res) => {
   try {
+    const chatId = req.body.chatId || `chat-${req.user.id}-${req.body.receiverId || 'ai'}`;
     const message = await prisma.chatMessage.create({
       data: {
-        chatId: req.body.chatId || `chat-${req.user.id}-${req.body.receiverId || 'ai'}`,
+        chatId,
         senderId: req.user.id,
         receiverId: req.body.receiverId || null,
         message: req.body.message,
         messageType: req.body.messageType || 'text',
       },
     });
+
+    if (req.body.receiverId) {
+      const io = req.app.get('io');
+      createNotification({ userId: req.body.receiverId, title: 'New Message', message: req.body.message.slice(0, 100), type: 'chat', link: `/chat?chat=${chatId}`, io });
+    }
+
     res.status(201).json({ message });
   } catch (error) {
     res.status(500).json({ error: error.message });

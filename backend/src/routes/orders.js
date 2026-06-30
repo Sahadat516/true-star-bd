@@ -4,6 +4,8 @@ const { auth, vendorAuth } = require('../middleware/auth');
 
 const router = express.Router();
 const prisma = new PrismaClient();
+const { createNotification, notifyOrderPlaced, notifyOrderStatus } = require('../services/notification');
+const { sendEmail, orderPlacedEmail, orderStatusEmail } = require('../services/email');
 
 // Create order
 router.post('/', auth, async (req, res) => {
@@ -68,6 +70,21 @@ router.post('/', auth, async (req, res) => {
       },
       include: { items: true },
     });
+
+    const io = req.app.get('io');
+    notifyOrderPlaced({ io, order, vendorId: firstVendorId, buyer: req.user });
+
+    // Send email to vendor
+    if (order.vendorId) {
+      const vendor = await prisma.vendor.findUnique({
+        where: { id: order.vendorId },
+        include: { user: { select: { email: true, firstName: true } } },
+      });
+      if (vendor) {
+        const emailData = orderPlacedEmail({ user: vendor.user, vendor, order });
+        sendEmail({ to: vendor.user.email, ...emailData });
+      }
+    }
 
     res.status(201).json({ order });
   } catch (error) {
@@ -163,6 +180,15 @@ router.patch('/:id/cancel', auth, async (req, res) => {
       where: { id: req.params.id },
       data: { status: 'CANCELLED', cancellationReason: reason || 'Cancelled by buyer' },
     });
+
+    const io = req.app.get('io');
+    notifyOrderStatus({ io, order: updated, buyerId: order.userId, vendorId: order.vendorId, oldStatus: order.status, newStatus: 'CANCELLED' });
+    const buyer = await prisma.user.findUnique({ where: { id: order.userId }, select: { email: true, firstName: true } });
+    if (buyer) {
+      const emailData = orderStatusEmail({ user: buyer, order: updated, oldStatus: order.status, newStatus: 'CANCELLED' });
+      sendEmail({ to: buyer.email, ...emailData });
+    }
+
     res.json({ order: updated });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -207,6 +233,14 @@ router.patch('/vendor/:id/status', vendorAuth, async (req, res) => {
       });
     }
 
+    const io = req.app.get('io');
+    notifyOrderStatus({ io, order: updated, buyerId: order.userId, vendorId: order.vendorId, oldStatus: order.status, newStatus: status });
+    const buyer = await prisma.user.findUnique({ where: { id: order.userId }, select: { email: true, firstName: true } });
+    if (buyer) {
+      const emailData = orderStatusEmail({ user: buyer, order: updated, oldStatus: order.status, newStatus: status });
+      sendEmail({ to: buyer.email, ...emailData });
+    }
+
     res.json({ order: updated });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -238,6 +272,9 @@ router.patch('/:id/confirm-receipt', auth, async (req, res) => {
       });
     }
 
+    const io = req.app.get('io');
+    notifyOrderStatus({ io, order: updated, buyerId: order.userId, vendorId: order.vendorId, oldStatus: order.status, newStatus: 'COMPLETED' });
+
     res.json({ order: updated });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -262,6 +299,10 @@ router.post('/:id/dispute', auth, async (req, res) => {
     const dispute = await prisma.dispute.create({
       data: { orderId: req.params.id, userId: req.user.id, vendorId: order.vendorId, reason, message },
     });
+
+    const io = req.app.get('io');
+    createNotification({ userId: order.vendorId, title: 'Dispute Filed', message: `A dispute has been filed on order #${order.orderNumber}: ${reason}`, type: 'dispute', link: '/admin', io });
+
     res.status(201).json({ dispute });
   } catch (error) {
     res.status(500).json({ error: error.message });

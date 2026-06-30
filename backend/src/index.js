@@ -56,6 +56,10 @@ app.get('/api/health', (req, res) => {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
+  socket.on('join', (userId) => {
+    socket.join(`user-${userId}`);
+  });
+
   socket.on('join-chat', (chatId) => {
     socket.join(`chat-${chatId}`);
   });
@@ -68,6 +72,8 @@ io.on('connection', (socket) => {
     console.log('Client disconnected:', socket.id);
   });
 });
+
+app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
